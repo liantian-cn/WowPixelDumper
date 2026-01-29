@@ -1,8 +1,8 @@
 local addonName, addonTable     = ...
 local LibRangeCheck             = LibStub:GetLibrary("LibRangeCheck-3.0", true)
 
-local DEBUG                     = true
-local scale                     = 3
+local DEBUG                     = false
+local scale                     = 1
 local fontFile, _, _            = GameFontNormal:GetFont()
 
 local logging                   = function(msg)
@@ -106,134 +106,177 @@ local function InitializeMainFrame()
     -- 创建主框架
     addonTable.MainFrame = CreateFrame("Frame", addonName .. "MainFrame", UIParent)
     addonTable.MainFrame:SetPoint("TOPRIGHT", UIParent, "TOPRIGHT", 0, 0)
-    addonTable.MainFrame:SetSize(node_size * 68, node_size * 16)
+    addonTable.MainFrame:SetSize(node_size * 52, node_size * 18)
     addonTable.MainFrame:SetFrameStrata("TOOLTIP")
     addonTable.MainFrame:SetFrameLevel(900)
     addonTable.MainFrame:Show()
 
-    addonTable.MainFrameTexture = addonTable.MainFrame:CreateTexture(nil, "BACKGROUND")
-    addonTable.MainFrameTexture:SetAllPoints()
-    addonTable.MainFrameTexture:SetColorTexture(0, 0, 0, 1)
-    addonTable.MainFrameTexture:Show()
+    addonTable.MainFrame.bg = addonTable.MainFrame:CreateTexture(nil, "BACKGROUND")
+    addonTable.MainFrame.bg:SetAllPoints()
+    addonTable.MainFrame.bg:SetColorTexture(0, 0, 0, 1)
+    addonTable.MainFrame.bg:Show()
+
+    addonTable.PlayerBuffFrame = CreateFrame("Frame", addonName .. "PlayerBuffFrame", addonTable.MainFrame)
+    addonTable.PlayerBuffFrame:SetFrameLevel(addonTable.MainFrame:GetFrameLevel() + 1)
+    addonTable.PlayerBuffFrame:SetPoint("TOPLEFT", addonTable.MainFrame, "TOPLEFT", 2 * node_size, -2 * node_size)
+    addonTable.PlayerBuffFrame:SetSize(48 * node_size, 2 * node_size)
+    addonTable.PlayerBuffFrame:Show()
+    addonTable.PlayerBuffFrame.bg = addonTable.PlayerBuffFrame:CreateTexture(nil, "BACKGROUND")
+    addonTable.PlayerBuffFrame.bg:SetAllPoints()
+    addonTable.PlayerBuffFrame.bg:SetColorTexture(0, 0, 0, 1)
+    addonTable.PlayerBuffFrame.bg:Show()
+    if DEBUG then
+        addonTable.PlayerBuffFrame.bg:SetColorTexture(127 / 255, 127 / 255, 127 / 255, 1)
+    end
 
 
     addonTable.PlayerBarFrame = CreateFrame("Frame", addonName .. "PlayerBarFrame", addonTable.MainFrame)
     addonTable.PlayerBarFrame:SetFrameLevel(addonTable.MainFrame:GetFrameLevel() + 1)
-    addonTable.PlayerBarFrame:SetPoint("TOPLEFT", addonTable.MainFrame, "TOPLEFT", 2 * node_size, -2 * node_size)
+    addonTable.PlayerBarFrame:SetPoint("TOPLEFT", addonTable.MainFrame, "TOPLEFT", 2 * node_size, -4 * node_size)
     addonTable.PlayerBarFrame:SetSize(10 * node_size, 4 * node_size)
-
+    addonTable.PlayerBarFrame.bg = addonTable.PlayerBarFrame:CreateTexture(nil, "BACKGROUND")
+    addonTable.PlayerBarFrame.bg:SetAllPoints()
+    addonTable.PlayerBarFrame.bg:SetColorTexture(0, 0, 0, 1)
+    addonTable.PlayerBarFrame.bg:Show()
     if DEBUG then
-        addonTable.PlayerBarFrameTexture = addonTable.PlayerBarFrame:CreateTexture(nil, "BACKGROUND")
-        addonTable.PlayerBarFrameTexture:SetAllPoints()
-        addonTable.PlayerBarFrameTexture:SetColorTexture(math.random(), math.random(), math.random(), 1)
-        addonTable.PlayerBarFrameTexture:Show()
+        addonTable.PlayerBarFrame.bg:SetColorTexture(127 / 255, 127 / 255, 127 / 255, 1)
     end
-
-    addonTable.PlayerBuffFrame = CreateFrame("Frame", addonName .. "PlayerBuffFrame", addonTable.MainFrame)
-    addonTable.PlayerBuffFrame:SetFrameLevel(addonTable.MainFrame:GetFrameLevel() + 1)
-    addonTable.PlayerBuffFrame:SetPoint("TOPLEFT", addonTable.MainFrame, "TOPLEFT", 12 * node_size, -2 * node_size)
-    addonTable.PlayerBuffFrame:SetSize(54 * node_size, 2 * node_size)
-    addonTable.PlayerBuffFrame:Show()
-
-    if DEBUG then
-        addonTable.PlayerBuffFrameTexture = addonTable.PlayerBuffFrame:CreateTexture(nil, "BACKGROUND")
-        addonTable.PlayerBuffFrameTexture:SetAllPoints()
-        addonTable.PlayerBuffFrameTexture:SetColorTexture(math.random(), math.random(), math.random(), 1)
-        addonTable.PlayerBuffFrameTexture:Show()
-    end
-
-    addonTable.PlayerDebuffFrame = CreateFrame("Frame", addonName .. "PlayerDebuffFrame", addonTable.MainFrame)
-    addonTable.PlayerDebuffFrame:SetFrameLevel(addonTable.MainFrame:GetFrameLevel() + 1)
-    addonTable.PlayerDebuffFrame:SetPoint("TOPLEFT", addonTable.MainFrame, "TOPLEFT", 12 * node_size, -4 * node_size)
-    addonTable.PlayerDebuffFrame:SetSize(28 * node_size, 2 * node_size)
-    addonTable.PlayerDebuffFrame:Show()
-
-    if DEBUG then
-        addonTable.PlayerDebuffFrameTexture = addonTable.PlayerDebuffFrame:CreateTexture(nil, "BACKGROUND")
-        addonTable.PlayerDebuffFrameTexture:SetAllPoints()
-        addonTable.PlayerDebuffFrameTexture:SetColorTexture(math.random(), math.random(), math.random(), 1)
-        addonTable.PlayerDebuffFrameTexture:Show()
-    end
-
-    addonTable.TargetDebuffFrame = CreateFrame("Frame", addonName .. "TargetDebuffFrame", addonTable.MainFrame)
-    addonTable.TargetDebuffFrame:SetFrameLevel(addonTable.MainFrame:GetFrameLevel() + 1)
-    addonTable.TargetDebuffFrame:SetPoint("TOPLEFT", addonTable.MainFrame, "TOPLEFT", 40 * node_size, -4 * node_size)
-    addonTable.TargetDebuffFrame:SetSize(26 * node_size, 2 * node_size)
-    addonTable.TargetDebuffFrame:Show()
-
-    if DEBUG then
-        addonTable.TargetDebuffFrameTexture = addonTable.TargetDebuffFrame:CreateTexture(nil, "BACKGROUND")
-        addonTable.TargetDebuffFrameTexture:SetAllPoints()
-        addonTable.TargetDebuffFrameTexture:SetColorTexture(math.random(), math.random(), math.random(), 1)
-        addonTable.TargetDebuffFrameTexture:Show()
-    end
-
 
     addonTable.PlayerSpellCDFrame = CreateFrame("Frame", addonName .. "PlayerSpellCDFrame", addonTable.MainFrame)
     addonTable.PlayerSpellCDFrame:SetFrameLevel(addonTable.MainFrame:GetFrameLevel() + 1)
-    addonTable.PlayerSpellCDFrame:SetPoint("TOPLEFT", addonTable.MainFrame, "TOPLEFT", 2 * node_size, -6 * node_size)
-    addonTable.PlayerSpellCDFrame:SetSize(24 * node_size, 2 * node_size)
+    addonTable.PlayerSpellCDFrame:SetPoint("TOPLEFT", addonTable.MainFrame, "TOPLEFT", 12 * node_size, -4 * node_size)
+    addonTable.PlayerSpellCDFrame:SetSize(23 * node_size, 2 * node_size)
     addonTable.PlayerSpellCDFrame:Show()
-
+    addonTable.PlayerSpellCDFrame.bg = addonTable.PlayerSpellCDFrame:CreateTexture(nil, "BACKGROUND")
+    addonTable.PlayerSpellCDFrame.bg:SetAllPoints()
+    addonTable.PlayerSpellCDFrame.bg:SetColorTexture(0, 0, 0, 1)
+    addonTable.PlayerSpellCDFrame.bg:Show()
     if DEBUG then
-        addonTable.PlayerSpellCDFrameTexture = addonTable.PlayerSpellCDFrame:CreateTexture(nil, "BACKGROUND")
-        addonTable.PlayerSpellCDFrameTexture:SetAllPoints()
-        addonTable.PlayerSpellCDFrameTexture:SetColorTexture(math.random(), math.random(), math.random(), 1)
-        addonTable.PlayerSpellCDFrameTexture:Show()
+        addonTable.PlayerSpellCDFrame.bg:SetColorTexture(127 / 255, 127 / 255, 127 / 255, 1)
     end
 
     addonTable.PlayerSpellChargeFrame = CreateFrame("Frame", addonName .. "PlayerSpellChargeFrame", addonTable.MainFrame)
     addonTable.PlayerSpellChargeFrame:SetFrameLevel(addonTable.MainFrame:GetFrameLevel() + 1)
-    addonTable.PlayerSpellChargeFrame:SetPoint("TOPLEFT", addonTable.MainFrame, "TOPLEFT", 26 * node_size, -6 * node_size)
-    addonTable.PlayerSpellChargeFrame:SetSize(6 * node_size, 2 * node_size)
+    addonTable.PlayerSpellChargeFrame:SetPoint("TOPLEFT", addonTable.MainFrame, "TOPLEFT", 35 * node_size, -4 * node_size)
+    addonTable.PlayerSpellChargeFrame:SetSize(5 * node_size, 2 * node_size)
     addonTable.PlayerSpellChargeFrame:Show()
+    addonTable.PlayerSpellChargeFrame.bg = addonTable.PlayerSpellChargeFrame:CreateTexture(nil, "BACKGROUND")
+    addonTable.PlayerSpellChargeFrame.bg:SetAllPoints()
+    addonTable.PlayerSpellChargeFrame.bg:SetColorTexture(0, 0, 0, 1)
+    addonTable.PlayerSpellChargeFrame.bg:Show()
     if DEBUG then
-        addonTable.PlayerChargeFrameTexture = addonTable.PlayerSpellChargeFrame:CreateTexture(nil, "BACKGROUND")
-        addonTable.PlayerChargeFrameTexture:SetAllPoints()
-        addonTable.PlayerChargeFrameTexture:SetColorTexture(math.random(), math.random(), math.random(), 1)
-        addonTable.PlayerChargeFrameTexture:Show()
+        addonTable.PlayerSpellChargeFrame.bg:SetColorTexture(127 / 255, 127 / 255, 127 / 255, 1)
     end
+
+    addonTable.PlayerDebuffFrame = CreateFrame("Frame", addonName .. "PlayerDebuffFrame", addonTable.MainFrame)
+    addonTable.PlayerDebuffFrame:SetFrameLevel(addonTable.MainFrame:GetFrameLevel() + 1)
+    addonTable.PlayerDebuffFrame:SetPoint("TOPLEFT", addonTable.MainFrame, "TOPLEFT", 12 * node_size, -6 * node_size)
+    addonTable.PlayerDebuffFrame:SetSize(14 * node_size, 2 * node_size)
+    addonTable.PlayerDebuffFrame:Show()
+    addonTable.PlayerDebuffFrame.bg = addonTable.PlayerDebuffFrame:CreateTexture(nil, "BACKGROUND")
+    addonTable.PlayerDebuffFrame.bg:SetAllPoints()
+    addonTable.PlayerDebuffFrame.bg:SetColorTexture(0, 0, 0, 1)
+    addonTable.PlayerDebuffFrame.bg:Show()
+    if DEBUG then
+        addonTable.PlayerDebuffFrame.bg:SetColorTexture(127 / 255, 127 / 255, 127 / 255, 1)
+    end
+
+    addonTable.TargetDebuffFrame = CreateFrame("Frame", addonName .. "TargetDebuffFrame", addonTable.MainFrame)
+    addonTable.TargetDebuffFrame:SetFrameLevel(addonTable.MainFrame:GetFrameLevel() + 1)
+    addonTable.TargetDebuffFrame:SetPoint("TOPLEFT", addonTable.MainFrame, "TOPLEFT", 26 * node_size, -6 * node_size)
+    addonTable.TargetDebuffFrame:SetSize(14 * node_size, 2 * node_size)
+    addonTable.TargetDebuffFrame:Show()
+    addonTable.TargetDebuffFrame.bg = addonTable.TargetDebuffFrame:CreateTexture(nil, "BACKGROUND")
+    addonTable.TargetDebuffFrame.bg:SetAllPoints()
+    addonTable.TargetDebuffFrame.bg:SetColorTexture(0, 0, 0, 1)
+    addonTable.TargetDebuffFrame.bg:Show()
+    if DEBUG then
+        addonTable.TargetDebuffFrame.bg:SetColorTexture(127 / 255, 127 / 255, 127 / 255, 1)
+    end
+
+    addonTable.PlayerStatusFrame = CreateFrame("Frame", addonName .. "PlayerStatusFrame", addonTable.MainFrame)
+    addonTable.PlayerStatusFrame:SetFrameLevel(addonTable.MainFrame:GetFrameLevel() + 1)
+    addonTable.PlayerStatusFrame:SetPoint("TOPLEFT", addonTable.MainFrame, "TOPLEFT", 40 * node_size, -4 * node_size)
+    addonTable.PlayerStatusFrame:SetSize(10 * node_size, 2 * node_size)
+    addonTable.PlayerStatusFrame:Show()
+    addonTable.PlayerStatusFrame.bg = addonTable.PlayerStatusFrame:CreateTexture(nil, "BACKGROUND")
+    addonTable.PlayerStatusFrame.bg:SetAllPoints()
+    addonTable.PlayerStatusFrame.bg:SetColorTexture(0, 0, 0, 1)
+    addonTable.PlayerStatusFrame.bg:Show()
+    if DEBUG then
+        addonTable.PlayerStatusFrame.bg:SetColorTexture(127 / 255, 127 / 255, 127 / 255, 1)
+    end
+
+
+    addonTable.TargetStatusFrame = CreateFrame("Frame", addonName .. "TargetStatusFrame", addonTable.MainFrame)
+    addonTable.TargetStatusFrame:SetFrameLevel(addonTable.MainFrame:GetFrameLevel() + 1)
+    addonTable.TargetStatusFrame:SetPoint("TOPLEFT", addonTable.MainFrame, "TOPLEFT", 40 * node_size, -6 * node_size)
+    addonTable.TargetStatusFrame:SetSize(10 * node_size, 3 * node_size)
+    addonTable.TargetStatusFrame:Show()
+    addonTable.TargetStatusFrame.bg = addonTable.TargetStatusFrame:CreateTexture(nil, "BACKGROUND")
+    addonTable.TargetStatusFrame.bg:SetAllPoints()
+    addonTable.TargetStatusFrame.bg:SetColorTexture(0, 0, 0, 1)
+    addonTable.TargetStatusFrame.bg:Show()
+    if DEBUG then
+        addonTable.TargetStatusFrame.bg:SetColorTexture(127 / 255, 127 / 255, 127 / 255, 1)
+    end
+
 
     addonTable.MiscFrame = CreateFrame("Frame", addonName .. "MiscFrame", addonTable.MainFrame)
     addonTable.MiscFrame:SetFrameLevel(addonTable.MainFrame:GetFrameLevel() + 1)
-    addonTable.MiscFrame:SetPoint("TOPLEFT", addonTable.MainFrame, "TOPLEFT", 32 * node_size, -6 * node_size)
-    addonTable.MiscFrame:SetSize(node_size * 25, node_size * 2)
+    addonTable.MiscFrame:SetPoint("TOPLEFT", addonTable.MainFrame, "TOPLEFT", 2 * node_size, -8 * node_size)
+    addonTable.MiscFrame:SetSize(node_size * 20, node_size * 1)
     addonTable.MiscFrame:Show()
-
+    addonTable.MiscFrame.bg = addonTable.MiscFrame:CreateTexture(nil, "BACKGROUND")
+    addonTable.MiscFrame.bg:SetAllPoints()
+    addonTable.MiscFrame.bg:SetColorTexture(0, 0, 0, 1)
+    addonTable.MiscFrame.bg:Show()
     if DEBUG then
-        addonTable.MiscFrameTexture = addonTable.MiscFrame:CreateTexture(nil, "BACKGROUND")
-        addonTable.MiscFrameTexture:SetAllPoints()
-        addonTable.MiscFrameTexture:SetColorTexture(math.random(), math.random(), math.random(), 1)
-        addonTable.MiscFrameTexture:Show()
+        addonTable.MiscFrame.bg:SetColorTexture(127 / 255, 127 / 255, 127 / 255, 1)
     end
 
     addonTable.SpecFrame = CreateFrame("Frame", addonName .. "SpecFrame", addonTable.MainFrame)
     addonTable.SpecFrame:SetFrameLevel(addonTable.MainFrame:GetFrameLevel() + 1)
-    addonTable.SpecFrame:SetPoint("TOPLEFT", addonTable.MainFrame, "TOPLEFT", 57 * node_size, -6 * node_size)
-    addonTable.SpecFrame:SetSize(node_size * 9, node_size * 2)
+    addonTable.SpecFrame:SetPoint("TOPLEFT", addonTable.MainFrame, "TOPLEFT", 22 * node_size, -8 * node_size)
+    addonTable.SpecFrame:SetSize(node_size * 18, node_size * 1)
     addonTable.SpecFrame:Show()
-
+    addonTable.SpecFrame.bg = addonTable.SpecFrame:CreateTexture(nil, "BACKGROUND")
+    addonTable.SpecFrame.bg:SetAllPoints()
+    addonTable.SpecFrame.bg:SetColorTexture(0, 0, 0, 1)
+    addonTable.SpecFrame.bg:Show()
     if DEBUG then
-        addonTable.SpecFrameTexture = addonTable.SpecFrame:CreateTexture(nil, "BACKGROUND")
-        addonTable.SpecFrameTexture:SetAllPoints()
-        addonTable.SpecFrameTexture:SetColorTexture(math.random(), math.random(), math.random(), 1)
-        addonTable.SpecFrameTexture:Show()
+        addonTable.SpecFrame.bg:SetColorTexture(127 / 255, 127 / 255, 127 / 255, 1)
     end
+
     for i = 1, 4 do
         local UnitKey = string.format("%s%d", "party", i)
 
         addonTable["PartyFrame" .. UnitKey] = CreateFrame("Frame", addonName .. "PartyFrame" .. UnitKey, addonTable.MainFrame)
         addonTable["PartyFrame" .. UnitKey]:SetFrameLevel(addonTable.MainFrame:GetFrameLevel() + 1)
-        addonTable["PartyFrame" .. UnitKey]:SetPoint("TOPLEFT", addonTable.MainFrame, "TOPLEFT", (16 * i - 14) * node_size, -8 * node_size)
-        addonTable["PartyFrame" .. UnitKey]:SetSize(node_size * 16, node_size * 6)
+        addonTable["PartyFrame" .. UnitKey]:SetPoint("TOPLEFT", addonTable.MainFrame, "TOPLEFT", (12 * i - 10) * node_size, -9 * node_size)
+        addonTable["PartyFrame" .. UnitKey]:SetSize(node_size * 12, node_size * 7)
         addonTable["PartyFrame" .. UnitKey]:Show()
-
+        addonTable["PartyFrame" .. UnitKey].bg = addonTable["PartyFrame" .. UnitKey]:CreateTexture(nil, "BACKGROUND")
+        addonTable["PartyFrame" .. UnitKey].bg:SetAllPoints()
+        addonTable["PartyFrame" .. UnitKey].bg:SetColorTexture(0, 0, 0, 1)
+        addonTable["PartyFrame" .. UnitKey].bg:Show()
         if DEBUG then
-            addonTable["PartyFrame" .. UnitKey .. "Texture"] = addonTable["PartyFrame" .. UnitKey]:CreateTexture(nil, "BACKGROUND")
-            addonTable["PartyFrame" .. UnitKey .. "Texture"]:SetAllPoints()
-            addonTable["PartyFrame" .. UnitKey .. "Texture"]:SetColorTexture(math.random(), math.random(), math.random(), 1)
-            addonTable["PartyFrame" .. UnitKey .. "Texture"]:Show()
+            addonTable["PartyFrame" .. UnitKey].bg:SetColorTexture(127 / 255, 127 / 255, 127 / 255, 1)
         end
+    end
+
+
+    addonTable.ConfigFrame = CreateFrame("Frame", addonName .. "ConfigFrame", addonTable.MainFrame)
+    addonTable.ConfigFrame:SetFrameLevel(addonTable.MainFrame:GetFrameLevel() + 1)
+    addonTable.ConfigFrame:SetPoint("TOPLEFT", addonTable.MainFrame, "TOPLEFT", 0, -16 * node_size)
+    addonTable.ConfigFrame:SetSize(node_size * 4, node_size * 2)
+    addonTable.ConfigFrame:Show()
+    addonTable.ConfigFrame.bg = addonTable.ConfigFrame:CreateTexture(nil, "BACKGROUND")
+    addonTable.ConfigFrame.bg:SetAllPoints()
+    addonTable.ConfigFrame.bg:SetColorTexture(0, 0, 0, 1)
+    addonTable.ConfigFrame.bg:Show()
+    if DEBUG then
+        addonTable.ConfigFrame.bg:SetColorTexture(0, 1, 1, 0.3)
     end
 
     logging("MainFrame created")
@@ -241,67 +284,22 @@ end
 
 table.insert(FrameInitFuncs, InitializeMainFrame)
 
-local function CreateWhiteBar(name, parent, x, y, width, height)
+
+local function CreateMiscNode(x, y, title, parent_frame)
     local node_size = addonTable.nodeSize
     local padSize = addonTable.padSize
     local innerSize = addonTable.innerSize
-
-    local frame = CreateFrame("Frame", addonName .. name, parent)
-    frame:SetFrameLevel(parent:GetFrameLevel() + 1)
-    frame:SetPoint("TOPLEFT", parent, "TOPLEFT", x * node_size, y * node_size - padSize)
-    frame:SetSize(width * node_size, height * node_size - 2 * padSize)
-    frame:Show()
-
-    local tex = frame:CreateTexture(nil, "BACKGROUND")
-    tex:SetAllPoints(frame)
-    tex:SetColorTexture(0, 0, 0, 1)
-
-
-    local bar = CreateFrame("StatusBar", nil, frame)
-    bar:SetAllPoints(frame)
-    bar:SetStatusBarTexture("Interface\\Buttons\\WHITE8X8")
-    bar:SetStatusBarColor(1, 1, 1, 1)
-    bar:SetMinMaxValues(0, 100)
-    bar:SetValue(50)
-    return bar
+    local nodeFrame = CreateFrame("Frame", addonName .. "Misc" .. title, parent_frame)
+    nodeFrame:SetPoint("TOPLEFT", parent_frame, "TOPLEFT", x * node_size + padSize, -y * node_size - padSize)
+    nodeFrame:SetFrameLevel(parent_frame:GetFrameLevel() + 1)
+    nodeFrame:SetSize(innerSize, innerSize)
+    nodeFrame:Show()
+    local nodeTexture = nodeFrame:CreateTexture(nil, "BACKGROUND")
+    nodeTexture:SetAllPoints(nodeFrame)
+    nodeTexture:SetColorTexture(0, 0, 0, 1)
+    nodeTexture:Show()
+    return nodeTexture
 end
-
-
-local function InitializePlayerBarFrame()
-    logging("InitializePlayerBarFrame")
-
-    local PlayerHealthBar = CreateWhiteBar("PlayerHealthBar", addonTable.PlayerBarFrame, 0, 0, 10, 1)
-    local PlayerPowerBar = CreateWhiteBar("PlayerPowerBar", addonTable.PlayerBarFrame, 0, -1, 10, 1)
-    local PlayerDamageAbsorbsBar = CreateWhiteBar("PlayerDamageAbsorbsBar", addonTable.PlayerBarFrame, 0, -2, 10, 1)
-    local PlayerHealAbsorbsBar = CreateWhiteBar("PlayerHealAbsorbsBar", addonTable.PlayerBarFrame, 0, -3, 10, 1)
-
-
-    local function UpdatePlayerBar()
-        local health = UnitHealth("player")
-        local maxHealth = UnitHealthMax("player")
-        PlayerHealthBar:SetMinMaxValues(0, maxHealth)
-        PlayerHealthBar:SetValue(health)
-
-        local power = UnitPower("player")
-        local maxPower = UnitPowerMax("player")
-        PlayerPowerBar:SetMinMaxValues(0, maxPower)
-        PlayerPowerBar:SetValue(power)
-
-        PlayerDamageAbsorbsBar:SetMinMaxValues(0, maxHealth)
-        PlayerDamageAbsorbsBar:SetValue(UnitGetTotalAbsorbs("player"))
-
-        PlayerHealAbsorbsBar:SetMinMaxValues(0, maxHealth)
-        PlayerHealAbsorbsBar:SetValue(UnitGetTotalHealAbsorbs("player"))
-    end
-
-    table.insert(UpdateFuncs, UpdatePlayerBar)
-
-    logging("PlayerBarFrame created")
-end
-
-table.insert(FrameInitFuncs, InitializePlayerBarFrame)
-
-
 
 local function CreateAuraSequence(unit, filter, maxCount, name_prefix, parent, sortRule, sortDirection)
     local node_size = addonTable.nodeSize
@@ -316,40 +314,15 @@ local function CreateAuraSequence(unit, filter, maxCount, name_prefix, parent, s
 
 
     for i = 1, maxCount do
-        local icon_frame = CreateFrame("Frame", addonName .. name_prefix .. "IconFrame" .. i, parent)
-        icon_frame:SetPoint("TOPLEFT", parent, "TOPLEFT", (2 * i - 2) * node_size + padSize, 0 - padSize)
-        icon_frame:SetFrameLevel(parent:GetFrameLevel() + 2)
-        icon_frame:SetSize(innerSize, innerSize)
-        icon_frame:Show()
-
-        local icon_texture = icon_frame:CreateTexture(nil, "BACKGROUND")
-        icon_texture:SetAllPoints(icon_frame)
-        icon_texture:SetColorTexture(0, 0, 0, 1)
-        icon_texture:Show()
+        local icon_texture = CreateMiscNode((2 * i - 2), 0, addonName .. name_prefix .. "IconFrame" .. i, parent)
         table.insert(iconTextures, icon_texture)
 
-        local duration_frame = CreateFrame("Frame", addonName .. name_prefix .. "DurationFrame" .. i, parent)
-        duration_frame:SetPoint("TOPLEFT", parent, "TOPLEFT", (2 * i - 2) * node_size + padSize, -node_size - padSize)
-        duration_frame:SetFrameLevel(parent:GetFrameLevel() + 2)
-        duration_frame:SetSize(innerSize, innerSize)
-        duration_frame:Show()
 
-        local duration_texture = duration_frame:CreateTexture(nil, "BACKGROUND")
-        duration_texture:SetAllPoints(duration_frame)
-        duration_texture:SetColorTexture(0, 0, 0, 1)
-        duration_texture:Show()
+        local duration_texture = CreateMiscNode((2 * i - 2), 1, addonName .. name_prefix .. "DurationFrame" .. i, parent)
         table.insert(durationTextures, duration_texture)
 
-        local dispel_frame = CreateFrame("Frame", addonName .. name_prefix .. "DispelFrame" .. i, parent)
-        dispel_frame:SetPoint("TOPLEFT", parent, "TOPLEFT", (2 * i - 1) * node_size + padSize, 0 - padSize)
-        dispel_frame:SetFrameLevel(parent:GetFrameLevel() + 2)
-        dispel_frame:SetSize(innerSize, innerSize)
-        dispel_frame:Show()
 
-        local dispel_texture = dispel_frame:CreateTexture(nil, "BACKGROUND")
-        dispel_texture:SetAllPoints(dispel_frame)
-        dispel_texture:SetColorTexture(0, 0, 0, 1)
-        dispel_texture:Show()
+        local dispel_texture = CreateMiscNode((2 * i - 1), 0, addonName .. name_prefix .. "DispelFrame" .. i, parent)
         table.insert(dispelTextures, dispel_texture)
 
         local count_frame = CreateFrame("Frame", addonName .. name_prefix .. "CountFrame" .. i, parent)
@@ -357,6 +330,11 @@ local function CreateAuraSequence(unit, filter, maxCount, name_prefix, parent, s
         count_frame:SetFrameLevel(parent:GetFrameLevel() + 2)
         count_frame:SetSize(innerSize, innerSize)
         count_frame:Show()
+
+        local count_texture = count_frame:CreateTexture(nil, "BACKGROUND")
+        count_texture:SetAllPoints(count_frame)
+        count_texture:SetColorTexture(0, 0, 0, 1)
+        count_texture:Show()
 
         local count_string = count_frame:CreateFontString(nil, "ARTWORK", "GameFontNormal")
         count_string:SetAllPoints(count_frame)
@@ -409,12 +387,107 @@ local function CreateAuraSequence(unit, filter, maxCount, name_prefix, parent, s
     end
     table.insert(UpdateFuncs, updateTexture)
 end
+
+
+local function CreateWhiteBar(name, parent, x, y, width, height)
+    local node_size = addonTable.nodeSize
+    local padSize = addonTable.padSize
+    local innerSize = addonTable.innerSize
+
+    local frame = CreateFrame("Frame", addonName .. name, parent)
+    frame:SetFrameLevel(parent:GetFrameLevel() + 1)
+    frame:SetPoint("TOPLEFT", parent, "TOPLEFT", x * node_size, y * node_size - padSize)
+    frame:SetSize(width * node_size, height * node_size - 2 * padSize)
+    frame:Show()
+
+    local tex = frame:CreateTexture(nil, "BACKGROUND")
+    tex:SetAllPoints(frame)
+    tex:SetColorTexture(0, 0, 0, 1)
+
+
+    local bar = CreateFrame("StatusBar", nil, frame)
+    bar:SetAllPoints(frame)
+    bar:SetStatusBarTexture("Interface\\Buttons\\WHITE8X8")
+    bar:SetStatusBarColor(1, 1, 1, 1)
+    bar:SetMinMaxValues(0, 100)
+    bar:SetValue(50)
+    return bar
+end
+
+local function InitializeConfigFrame()
+    local si_node = CreateMiscNode(1, 0, addonName .. "ConfigFrame", addonTable.ConfigFrame)
+    local enable_node = CreateMiscNode(3, 0, addonName .. "ConfigFrame", addonTable.ConfigFrame)
+    SLASH_SI1 = "/si"
+    SlashCmdList["SI"] = function(msg)
+        local spellID = tonumber(msg)
+        if not spellID then
+            logging("Invalid spellID")
+            return
+        end
+        local iconID, originalIconID = C_Spell.GetSpellTexture(spellID)
+        if not iconID then
+            logging("Invalid spellID")
+            return
+        end
+        si_node:SetTexture(iconID)
+        local spellLink = C_Spell.GetSpellLink(spellID)
+        logging(spellLink)
+        C_Timer.After(10, function()
+            logging("SI reset")
+            si_node:SetColorTexture(0, 0, 0, 1)
+        end)
+    end
+end
+table.insert(FrameInitFuncs, InitializeConfigFrame)
+
 local function InitializeAuraFrame()
-    CreateAuraSequence("player", "HELPFUL|PLAYER", 27, "PlayerBuff", addonTable.PlayerBuffFrame, Enum.UnitAuraSortRule.Expiration, Enum.UnitAuraSortDirection.Normal)
-    CreateAuraSequence("target", "HARMFUL|PLAYER", 13, "TargetDebuff", addonTable.TargetDebuffFrame, Enum.UnitAuraSortRule.Expiration, Enum.UnitAuraSortDirection.Normal)
-    CreateAuraSequence("player", "HARMFUL", 14, "PlayerDebuff", addonTable.PlayerDebuffFrame, Enum.UnitAuraSortRule.Expiration, Enum.UnitAuraSortDirection.Normal)
+    logging("InitializeAuraFrame")
+    CreateAuraSequence("player", "HELPFUL", 24, "PlayerBuff", addonTable.PlayerBuffFrame, Enum.UnitAuraSortRule.Expiration, Enum.UnitAuraSortDirection.Normal)
+    CreateAuraSequence("target", "HARMFUL|PLAYER", 7, "TargetDebuff", addonTable.TargetDebuffFrame, Enum.UnitAuraSortRule.Expiration, Enum.UnitAuraSortDirection.Normal)
+    CreateAuraSequence("player", "HARMFUL", 7, "PlayerDebuff", addonTable.PlayerDebuffFrame, Enum.UnitAuraSortRule.Expiration, Enum.UnitAuraSortDirection.Normal)
+    logging("AuraFrame created")
 end
 table.insert(FrameInitFuncs, InitializeAuraFrame)
+
+
+local function InitializePlayerBarFrame()
+    logging("InitializePlayerBarFrame")
+
+    local PlayerHealthBar = CreateWhiteBar("PlayerHealthBar", addonTable.PlayerBarFrame, 0, 0, 10, 1)
+    local PlayerPowerBar = CreateWhiteBar("PlayerPowerBar", addonTable.PlayerBarFrame, 0, -1, 10, 1)
+    local PlayerDamageAbsorbsBar = CreateWhiteBar("PlayerDamageAbsorbsBar", addonTable.PlayerBarFrame, 0, -2, 10, 1)
+    local PlayerHealAbsorbsBar = CreateWhiteBar("PlayerHealAbsorbsBar", addonTable.PlayerBarFrame, 0, -3, 10, 1)
+
+
+    local function UpdatePlayerBar()
+        local health = UnitHealth("player")
+        local maxHealth = UnitHealthMax("player")
+        PlayerHealthBar:SetMinMaxValues(0, maxHealth)
+        PlayerHealthBar:SetValue(health)
+
+        local power = UnitPower("player")
+        local maxPower = UnitPowerMax("player")
+        PlayerPowerBar:SetMinMaxValues(0, maxPower)
+        PlayerPowerBar:SetValue(power)
+
+        PlayerDamageAbsorbsBar:SetMinMaxValues(0, maxHealth)
+        PlayerDamageAbsorbsBar:SetValue(UnitGetTotalAbsorbs("player"))
+
+        PlayerHealAbsorbsBar:SetMinMaxValues(0, maxHealth)
+        PlayerHealAbsorbsBar:SetValue(UnitGetTotalHealAbsorbs("player"))
+    end
+
+    table.insert(UpdateFuncs, UpdatePlayerBar)
+
+    logging("PlayerBarFrame created")
+end
+
+table.insert(FrameInitFuncs, InitializePlayerBarFrame)
+
+
+
+
+
 
 
 local function InitializeSpellCDFrame()
@@ -422,34 +495,16 @@ local function InitializeSpellCDFrame()
     local node_size = addonTable.nodeSize
     local padSize = addonTable.padSize
     local innerSize = addonTable.innerSize
-    local MaxFrame = math.min(24, #addonTable.SpellCD)
+    local MaxFrame = math.min(23, #addonTable.SpellCD)
     local iconTextrues = {}
     local cooldownTextrues = {}
 
-    for i = 1, 24 do
-        local iconFrame = CreateFrame("Frame", addonName .. "SpellCDIconFrame" .. i, addonTable.PlayerSpellCDFrame)
-        iconFrame:SetPoint("TOPLEFT", addonTable.PlayerSpellCDFrame, "TOPLEFT", (i - 1) * node_size + padSize, 0 - padSize)
-        iconFrame:SetFrameLevel(addonTable.PlayerSpellCDFrame:GetFrameLevel() + 1)
-        iconFrame:SetSize(innerSize, innerSize)
-        iconFrame:Show()
-
-        local iconTexture = iconFrame:CreateTexture(nil, "BACKGROUND")
-        iconTexture:SetAllPoints(iconFrame)
-        iconTexture:SetColorTexture(0, 0, 0, 1)
-        iconTexture:Show()
+    for i = 1, 23 do
+        local iconTexture = CreateMiscNode(i - 1, 0, "SpellCDIconFrame" .. i, addonTable.PlayerSpellCDFrame)
         table.insert(iconTextrues, iconTexture)
 
-        local cooldownFrame = CreateFrame("Frame", addonName .. "SpellCDFrame" .. i, addonTable.PlayerSpellCDFrame)
-        cooldownFrame:SetPoint("TOPLEFT", addonTable.PlayerSpellCDFrame, "TOPLEFT", (i - 1) * node_size + padSize, -1 * node_size - padSize)
-        cooldownFrame:SetFrameLevel(addonTable.PlayerSpellCDFrame:GetFrameLevel() + 1)
-        cooldownFrame:SetSize(innerSize, innerSize)
-        cooldownFrame:Show()
-
-        local cooldownFrameTexture = cooldownFrame:CreateTexture(nil, "BACKGROUND")
-        cooldownFrameTexture:SetAllPoints(cooldownFrame)
-        cooldownFrameTexture:SetColorTexture(0, 0, 0, 1)
-        cooldownFrameTexture:Show()
-        table.insert(cooldownTextrues, cooldownFrameTexture)
+        local cooldownTexture = CreateMiscNode(i - 1, 1, "SpellCDCooldownFrame" .. i, addonTable.PlayerSpellCDFrame)
+        table.insert(cooldownTextrues, cooldownTexture)
     end
 
     for i = 1, MaxFrame do
@@ -479,11 +534,11 @@ local function InitializeSpellChargeFrame()
     local node_size = addonTable.nodeSize
     local padSize = addonTable.padSize
     local innerSize = addonTable.innerSize
-    local MaxFrame = math.min(6, #addonTable.SpellCharge)
+    local MaxFrame = math.min(5, #addonTable.SpellCharge)
     local iconTextrues = {}
     local chargeTextrues = {}
 
-    for i = 1, 6 do
+    for i = 1, 5 do
         local iconFrame = CreateFrame("Frame", addonName .. "SpellChargeIconFrame" .. i, addonTable.PlayerSpellChargeFrame)
         iconFrame:SetPoint("TOPLEFT", addonTable.PlayerSpellChargeFrame, "TOPLEFT", (i - 1) * node_size + padSize, 0 - padSize)
         iconFrame:SetFrameLevel(addonTable.PlayerSpellChargeFrame:GetFrameLevel() + 1)
@@ -544,19 +599,19 @@ local function InitializePartyFrame()
         local frame_pre = addonName .. "PartyFrame" .. UnitKey
         local status_frame = CreateFrame("Frame", frame_pre .. "StatusFrame", parent_frame)
         status_frame:SetFrameLevel(parent_frame:GetFrameLevel() + 1)
-        status_frame:SetPoint("TOPLEFT", parent_frame, "TOPLEFT", 0, 0)
-        status_frame:SetSize(node_size * 2, node_size * 2)
+        status_frame:SetPoint("TOPLEFT", parent_frame, "TOPLEFT", 10 * node_size, -4 * node_size)
+        status_frame:SetSize(node_size * 2, node_size * 3)
         status_frame:Show()
 
         local debuff_frame = CreateFrame("Frame", frame_pre .. "DebuffFrame", parent_frame)
         debuff_frame:SetFrameLevel(parent_frame:GetFrameLevel() + 1)
-        debuff_frame:SetPoint("TOPLEFT", parent_frame, "TOPLEFT", 2 * node_size, 0 * node_size)
+        debuff_frame:SetPoint("TOPLEFT", parent_frame, "TOPLEFT", 0, -2 * node_size)
         debuff_frame:SetSize(node_size * 14, node_size * 2)
         debuff_frame:Show()
 
         local buff_frame = CreateFrame("Frame", frame_pre .. "BuffFrame", parent_frame)
         buff_frame:SetFrameLevel(parent_frame:GetFrameLevel() + 1)
-        buff_frame:SetPoint("TOPLEFT", parent_frame, "TOPLEFT", 0, -2 * node_size)
+        buff_frame:SetPoint("TOPLEFT", parent_frame, "TOPLEFT", 0, 0)
         buff_frame:SetSize(node_size * 16, node_size * 2)
         buff_frame:Show()
 
@@ -564,7 +619,7 @@ local function InitializePartyFrame()
         local bar_frame = CreateFrame("Frame", frame_pre .. "BarFrame", parent_frame)
         bar_frame:SetFrameLevel(parent_frame:GetFrameLevel() + 1)
         bar_frame:SetPoint("TOPLEFT", parent_frame, "TOPLEFT", 0, -4 * node_size)
-        bar_frame:SetSize(node_size * 16, node_size * 2)
+        bar_frame:SetSize(node_size * 10, node_size * 3)
         bar_frame:Show()
 
 
@@ -613,13 +668,12 @@ local function InitializePartyFrame()
         role_texture:Show()
 
 
-        CreateAuraSequence(UnitKey, "HARMFUL|PLAYER", 7, UnitKey .. "Debuff", debuff_frame, Enum.UnitAuraSortRule.Expiration, Enum.UnitAuraSortDirection.Normal)
-        CreateAuraSequence(UnitKey, "HELPFUL|PLAYER", 8, UnitKey .. "Buff", buff_frame, Enum.UnitAuraSortRule.Expiration, Enum.UnitAuraSortDirection.Normal)
+        CreateAuraSequence(UnitKey, "HARMFUL", 6, UnitKey .. "Debuff", debuff_frame, Enum.UnitAuraSortRule.Expiration, Enum.UnitAuraSortDirection.Normal)
+        CreateAuraSequence(UnitKey, "HELPFUL|PLAYER", 6, UnitKey .. "Buff", buff_frame, Enum.UnitAuraSortRule.Expiration, Enum.UnitAuraSortDirection.Normal)
 
-        local HealthBar = CreateWhiteBar(UnitKey .. "HealthBar", bar_frame, 0, 0, 8, 1)
-        local PowerBar = CreateWhiteBar(UnitKey .. "PowerBar", bar_frame, 0, -1, 8, 1)
-        local DamageAbsorbsBar = CreateWhiteBar(UnitKey .. "DamageAbsorbsBar", bar_frame, 8, 0, 8, 1)
-        local HealAbsorbsBar = CreateWhiteBar(UnitKey .. "HealAbsorbsBar", bar_frame, 8, -1, 8, 1)
+        local HealthBar = CreateWhiteBar(UnitKey .. "HealthBar", bar_frame, 0, 0, 10, 1)
+        local DamageAbsorbsBar = CreateWhiteBar(UnitKey .. "DamageAbsorbsBar", bar_frame, 0, -1, 10, 1)
+        local HealAbsorbsBar = CreateWhiteBar(UnitKey .. "HealAbsorbsBar", bar_frame, 0, -2, 10, 1)
 
 
         function UpdateUnitrame()
@@ -646,11 +700,6 @@ local function InitializePartyFrame()
                 HealthBar:SetMinMaxValues(0, maxHealth)
                 HealthBar:SetValue(health)
 
-                local power = UnitPower(UnitKey)
-                local maxPower = UnitPowerMax(UnitKey)
-                PowerBar:SetMinMaxValues(0, maxPower)
-                PowerBar:SetValue(power)
-
                 DamageAbsorbsBar:SetMinMaxValues(0, maxHealth)
                 DamageAbsorbsBar:SetValue(UnitGetTotalAbsorbs(UnitKey))
 
@@ -662,7 +711,6 @@ local function InitializePartyFrame()
                 class_texture:SetColorTexture(0, 0, 0, 1)
                 role_texture:SetColorTexture(0, 0, 0, 1)
                 HealthBar:SetValue(0)
-                PowerBar:SetValue(0)
                 DamageAbsorbsBar:SetValue(0)
                 HealAbsorbsBar:SetValue(0)
             end
@@ -675,77 +723,34 @@ end
 
 table.insert(FrameInitFuncs, InitializePartyFrame)
 
-local function CreateMiscNode(x, y, title)
-    local node_size = addonTable.nodeSize
-    local padSize = addonTable.padSize
-    local innerSize = addonTable.innerSize
-    local nodeFrame = CreateFrame("Frame", addonName .. "Misc" .. title, addonTable.MiscFrame)
-    nodeFrame:SetPoint("TOPLEFT", addonTable.MiscFrame, "TOPLEFT", x * node_size + padSize, -y * node_size - padSize)
-    nodeFrame:SetFrameLevel(addonTable.MiscFrame:GetFrameLevel() + 1)
-    nodeFrame:SetSize(innerSize, innerSize)
-    nodeFrame:Show()
-    local nodeTexture = nodeFrame:CreateTexture(nil, "BACKGROUND")
-    nodeTexture:SetAllPoints(nodeFrame)
-    nodeTexture:SetColorTexture(0, 0, 0, 1)
-    nodeTexture:Show()
-    return nodeTexture
-end
 
 
-local function InitializeMiscFrame()
+local function InitializePlayerStatusFrame()
     local x = 0
     local y = 0
-    local player_in_combat = CreateMiscNode(x, y, "PlayerInCombat")
+    local player_in_combat = CreateMiscNode(x, y, "PlayerInCombat", addonTable.PlayerStatusFrame)
     x = 1
-    local player_is_moving = CreateMiscNode(x, y, "PlayerIsMoving")
+    local player_is_moving = CreateMiscNode(x, y, "PlayerIsMoving", addonTable.PlayerStatusFrame)
     x = 2
-    local target_exist = CreateMiscNode(x, y, "TargetExist")
+    local player_in_vehicle = CreateMiscNode(x, y, "PlayerInVehicle", addonTable.PlayerStatusFrame)
     x = 3
-    local target_can_attack = CreateMiscNode(x, y, "TargetCanAttack")
-    x = 4
-    local target_is_self = CreateMiscNode(x, y, "TargetIsSelf")
-    y = 1
-    x = 0
-
-    local player_is_empowered = CreateMiscNode(x, y, "PlayerIsEmpowered")
-    x = 1
-    local player_in_vehicle = CreateMiscNode(x, y, "PlayerInVehicle")
-    x = 2
-    local target_is_alive = CreateMiscNode(x, y, "TargetIsAlive")
-    x = 3
-    local target_in_combat = CreateMiscNode(x, y, "TargetInCombat")
-    x = 4
-    local target_in_range = CreateMiscNode(x, y, "TargetInRange")
-
-    y = 0
+    local player_is_empowered = CreateMiscNode(x, y, "PlayerIsEmpowered", addonTable.PlayerStatusFrame)
     x = 5
-    local target_cast_icon = CreateMiscNode(x, y, "TargetCastIcon")
+    local player_cast_icon = CreateMiscNode(x, y, "PlayerCastIcon", addonTable.PlayerStatusFrame)
     x = 6
-    local target_cast_duration = CreateMiscNode(x, y, "TargetCastDuration")
+    local player_cast_duration = CreateMiscNode(x, y, "PlayerCastDuration", addonTable.PlayerStatusFrame)
     x = 7
-    local target_cast_interruptible = CreateMiscNode(x, y, "TargetCastInterruptible")
-    y = 1
-    x = 5
-    local target_channel_icon = CreateMiscNode(x, y, "TargetChannelIcon")
-    x = 6
-    local target_channel_duration = CreateMiscNode(x, y, "TargetChannelDuration")
-    x = 7
-    local target_channel_interruptible = CreateMiscNode(x, y, "TargetChannelInterruptible")
+    local player_channel_icon = CreateMiscNode(x, y, "PlayerChannelIcon", addonTable.PlayerStatusFrame)
+    x = 8
+    local player_channel_duration = CreateMiscNode(x, y, "PlayerChannelDuration", addonTable.PlayerStatusFrame)
 
 
 
-    function UpdateNode1()
+    local function UpdateStatus()
         if UnitAffectingCombat("player") then
             player_in_combat:SetColorTexture(1, 1, 1, 1)
         else
             player_in_combat:SetColorTexture(0, 0, 0, 1)
-        end
-
-        local _, _, _, _, _, _, _, _, isEmpowered, _, _ = UnitChannelInfo("player")
-        if isEmpowered then
-            player_is_empowered:SetColorTexture(1, 1, 1, 1)
-        else
-            player_is_empowered:SetColorTexture(0, 0, 0, 1)
         end
 
         if GetUnitSpeed("player") > 0 then
@@ -760,8 +765,78 @@ local function InitializeMiscFrame()
             player_in_vehicle:SetColorTexture(0, 0, 0, 1)
         end
 
+        local _, _, CastTextureID, _, _, _, _, _, _, _ = UnitCastingInfo("player")
+        if CastTextureID then
+            player_cast_icon:SetTexture(CastTextureID)
+            local duration = UnitCastingDuration("player")
+            local result = duration:EvaluateElapsedPercent(curve_reverse)
+            player_cast_duration:SetColorTexture(result.r, result.g, result.b, 1)
+        else
+            player_cast_icon:SetColorTexture(0, 0, 0, 1)
+            player_cast_duration:SetColorTexture(0, 0, 0, 1)
+        end
+
+
+        local _, _, channelTextureID, _, _, _, _, _, isEmpowered, _, _ = UnitChannelInfo("player")
+        if isEmpowered then
+            player_is_empowered:SetColorTexture(1, 1, 1, 1)
+        else
+            player_is_empowered:SetColorTexture(0, 0, 0, 1)
+        end
+
+        if channelTextureID then
+            player_channel_icon:SetTexture(channelTextureID)
+            local duration = UnitChannelDuration("player")
+            local result = duration:EvaluateElapsedPercent(curve_reverse)
+            player_channel_duration:SetColorTexture(result.r, result.g, result.b, 1)
+        else
+            player_channel_icon:SetColorTexture(0, 0, 0, 1)
+            player_channel_duration:SetColorTexture(0, 0, 0, 1)
+        end
+    end
+    table.insert(UpdateFuncs, UpdateStatus)
+end
+table.insert(FrameInitFuncs, InitializePlayerStatusFrame)
+
+
+local function InitializeTargetStatusFrame()
+    local x = 0
+    local y = 0
+    local health_bar = CreateWhiteBar("TargetHealthBar", addonTable.TargetStatusFrame, 0, 0, 10, 1)
+    y = 1
+    local target_exist = CreateMiscNode(x, y, "TargetExist", addonTable.TargetStatusFrame)
+    x = 1
+    local target_can_attack = CreateMiscNode(x, y, "TargetCanAttack", addonTable.TargetStatusFrame)
+    x = 2
+    local target_is_self = CreateMiscNode(x, y, "TargetIsSelf", addonTable.TargetStatusFrame)
+    x = 3
+    local target_is_alive = CreateMiscNode(x, y, "TargetIsAlive", addonTable.TargetStatusFrame)
+    x = 4
+    local target_in_combat = CreateMiscNode(x, y, "TargetInCombat", addonTable.TargetStatusFrame)
+    x = 5
+    local target_in_range = CreateMiscNode(x, y, "TargetInRange", addonTable.TargetStatusFrame)
+    y = 2
+    x = 0
+    local target_cast_icon = CreateMiscNode(x, y, "TargetCastIcon", addonTable.TargetStatusFrame)
+    x = 1
+    local target_cast_duration = CreateMiscNode(x, y, "TargetCastDuration", addonTable.TargetStatusFrame)
+    x = 2
+    local target_cast_interruptible = CreateMiscNode(x, y, "TargetCastInterruptible", addonTable.TargetStatusFrame)
+    x = 3
+    local target_channel_icon = CreateMiscNode(x, y, "TargetChannelIcon", addonTable.TargetStatusFrame)
+    x = 4
+    local target_channel_duration = CreateMiscNode(x, y, "TargetChannelDuration", addonTable.TargetStatusFrame)
+    x = 5
+    local target_channel_interruptible = CreateMiscNode(x, y, "TargetChannelInterruptible", addonTable.TargetStatusFrame)
+
+    local function UpdateStatus()
         if UnitExists("target") then
             target_exist:SetColorTexture(1, 1, 1, 1)
+
+            local health = UnitHealth("target")
+            local maxHealth = UnitHealthMax("target")
+            health_bar:SetMinMaxValues(0, maxHealth)
+            health_bar:SetValue(health)
 
             if UnitCanAttack("player", "target") then
                 target_can_attack:SetColorTexture(1, 1, 1, 1)
@@ -799,7 +874,7 @@ local function InitializeMiscFrame()
                 target_cast_icon:SetTexture(CastTextureID)
                 target_cast_interruptible:SetColorTexture(C_CurveUtil.EvaluateColorFromBoolean(CastNotInterruptible, { r = 0, g = 0, b = 0, a = 1 }, { r = 1, g = 1, b = 1, a = 1 }):GetRGBA())
                 local duration = UnitCastingDuration("target")
-                local result = duration:EvaluateElapsedPercent(curve)
+                local result = duration:EvaluateElapsedPercent(curve_reverse)
                 target_cast_duration:SetColorTexture(result.r, result.g, result.b, 1)
             else
                 target_cast_icon:SetColorTexture(0, 0, 0, 1)
@@ -811,7 +886,7 @@ local function InitializeMiscFrame()
                 target_channel_icon:SetTexture(textureID)
                 target_channel_interruptible:SetColorTexture(C_CurveUtil.EvaluateColorFromBoolean(ChannelNotInterruptible, { r = 0, g = 0, b = 0, a = 1 }, { r = 1, g = 1, b = 1, a = 1 }):GetRGBA())
                 local duration = UnitChannelDuration("target")
-                local result = duration:EvaluateElapsedPercent(curve)
+                local result = duration:EvaluateElapsedPercent(curve_reverse)
                 target_channel_duration:SetColorTexture(result.r, result.g, result.b, 1)
             else
                 target_channel_icon:SetColorTexture(0, 0, 0, 1)
@@ -820,6 +895,7 @@ local function InitializeMiscFrame()
             end
         else
             target_exist:SetColorTexture(0, 0, 0, 1)
+            health_bar:SetValue(0)
             target_can_attack:SetColorTexture(0, 0, 0, 1)
             target_is_self:SetColorTexture(0, 0, 0, 1)
             target_in_combat:SetColorTexture(0, 0, 0, 1)
@@ -834,7 +910,14 @@ local function InitializeMiscFrame()
         end
     end
 
-    table.insert(UpdateFuncs, UpdateNode1)
+    table.insert(UpdateFuncs, UpdateStatus)
+end
+table.insert(FrameInitFuncs, InitializeTargetStatusFrame)
+
+
+
+local function InitializeMiscFrame()
+    return
 end
 table.insert(FrameInitFuncs, InitializeMiscFrame)
 
@@ -849,18 +932,7 @@ table.insert(FrameInitFuncs, InitializeMiscFrame)
 
 
 
-table.insert(addonTable.SpellCharge, 47540)  -- [苦修]
-table.insert(addonTable.SpellCharge, 194509) -- [真言术：耀]
-table.insert(addonTable.SpellCD, 17)         -- [真言术：盾]
-table.insert(addonTable.SpellCD, 47540)      --[苦修]
-table.insert(addonTable.SpellCD, 8092)       --[心灵震爆]
-table.insert(addonTable.SpellCD, 527)        --[纯净术]
-table.insert(addonTable.SpellCD, 194509)     --[真言术：耀]
-table.insert(addonTable.SpellCD, 32379)      --[暗言术：灭]
-table.insert(addonTable.SpellCD, 19236)      --[绝望祷言]
-table.insert(addonTable.SpellCD, 472433)     --[福音]
-table.insert(addonTable.SpellCD, 586)        --[渐隐术]
-table.insert(addonTable.SpellCD, 33206)      --[痛苦压制]
+
 
 
 -- 设置游戏变量，确保插件正常运行

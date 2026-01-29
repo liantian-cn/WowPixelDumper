@@ -13,14 +13,7 @@ Libs\LibRangeCheck-3.0\LibRangeCheck-3.0.lua
 
 Setting.lua
 MidnightAddon.lua
-# MainFrame.lua
-# Aura.lua
-# PlayerStatus.lua
-# SpellCD.lua
-# SpellChargeCD.lua
-# Misc.lua
-# Party.lua
-# TestShow.lua
+class\Priest.lua
 
 
 
