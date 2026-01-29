@@ -1,7 +1,7 @@
 local addonName, addonTable     = ...
 local LibRangeCheck             = LibStub:GetLibrary("LibRangeCheck-3.0", true)
 
-local DEBUG                     = false
+local DEBUG                     = true
 local scale                     = 3
 local fontFile, _, _            = GameFontNormal:GetFont()
 
@@ -717,7 +717,20 @@ local function InitializeMiscFrame()
     x = 4
     local target_in_range = CreateMiscNode(x, y, "TargetInRange")
 
-
+    y = 0
+    x = 5
+    local target_cast_icon = CreateMiscNode(x, y, "TargetCastIcon")
+    x = 6
+    local target_cast_duration = CreateMiscNode(x, y, "TargetCastDuration")
+    x = 7
+    local target_cast_interruptible = CreateMiscNode(x, y, "TargetCastInterruptible")
+    y = 1
+    x = 5
+    local target_channel_icon = CreateMiscNode(x, y, "TargetChannelIcon")
+    x = 6
+    local target_channel_duration = CreateMiscNode(x, y, "TargetChannelDuration")
+    x = 7
+    local target_channel_interruptible = CreateMiscNode(x, y, "TargetChannelInterruptible")
 
 
 
@@ -749,6 +762,62 @@ local function InitializeMiscFrame()
 
         if UnitExists("target") then
             target_exist:SetColorTexture(1, 1, 1, 1)
+
+            if UnitCanAttack("player", "target") then
+                target_can_attack:SetColorTexture(1, 1, 1, 1)
+            else
+                target_can_attack:SetColorTexture(0, 0, 0, 1)
+            end
+
+            if UnitIsUnit("player", "target") then
+                target_is_self:SetColorTexture(1, 1, 1, 1)
+            else
+                target_is_self:SetColorTexture(0, 0, 0, 1)
+            end
+
+            if UnitAffectingCombat("target") then
+                target_in_combat:SetColorTexture(1, 1, 1, 1)
+            else
+                target_in_combat:SetColorTexture(0, 0, 0, 1)
+            end
+
+            if UnitIsDeadOrGhost("target") then
+                target_is_alive:SetColorTexture(0, 0, 0, 1)
+            else
+                target_is_alive:SetColorTexture(1, 1, 1, 1)
+            end
+
+            local _, maxRange = LibRangeCheck:GetRange("target")
+            if maxRange and (maxRange <= addonTable.RangeCheck) then
+                target_in_range:SetColorTexture(1, 1, 1, 1)
+            else
+                target_in_range:SetColorTexture(0, 0, 0, 1)
+            end
+
+            local _, _, CastTextureID, _, _, _, _, CastNotInterruptible, _, _ = UnitCastingInfo("target")
+            if CastTextureID then
+                target_cast_icon:SetTexture(CastTextureID)
+                target_cast_interruptible:SetColorTexture(C_CurveUtil.EvaluateColorFromBoolean(CastNotInterruptible, { r = 0, g = 0, b = 0, a = 1 }, { r = 1, g = 1, b = 1, a = 1 }):GetRGBA())
+                local duration = UnitCastingDuration("target")
+                local result = duration:EvaluateElapsedPercent(curve)
+                target_cast_duration:SetColorTexture(result.r, result.g, result.b, 1)
+            else
+                target_cast_icon:SetColorTexture(0, 0, 0, 1)
+                target_cast_duration:SetColorTexture(0, 0, 0, 1)
+                target_cast_interruptible:SetColorTexture(0, 0, 0, 1)
+            end
+            local _, _, textureID, _, _, _, ChannelNotInterruptible = UnitChannelInfo("target")
+            if textureID then
+                target_channel_icon:SetTexture(textureID)
+                target_channel_interruptible:SetColorTexture(C_CurveUtil.EvaluateColorFromBoolean(ChannelNotInterruptible, { r = 0, g = 0, b = 0, a = 1 }, { r = 1, g = 1, b = 1, a = 1 }):GetRGBA())
+                local duration = UnitChannelDuration("target")
+                local result = duration:EvaluateElapsedPercent(curve)
+                target_channel_duration:SetColorTexture(result.r, result.g, result.b, 1)
+            else
+                target_channel_icon:SetColorTexture(0, 0, 0, 1)
+                target_channel_duration:SetColorTexture(0, 0, 0, 1)
+                target_channel_interruptible:SetColorTexture(0, 0, 0, 1)
+            end
         else
             target_exist:SetColorTexture(0, 0, 0, 1)
             target_can_attack:SetColorTexture(0, 0, 0, 1)
@@ -756,6 +825,12 @@ local function InitializeMiscFrame()
             target_in_combat:SetColorTexture(0, 0, 0, 1)
             target_in_range:SetColorTexture(0, 0, 0, 1)
             target_is_alive:SetColorTexture(0, 0, 0, 1)
+            target_cast_icon:SetColorTexture(0, 0, 0, 1)
+            target_cast_duration:SetColorTexture(0, 0, 0, 1)
+            target_cast_interruptible:SetColorTexture(0, 0, 0, 1)
+            target_channel_icon:SetColorTexture(0, 0, 0, 1)
+            target_channel_duration:SetColorTexture(0, 0, 0, 1)
+            target_channel_interruptible:SetColorTexture(0, 0, 0, 1)
         end
     end
 
