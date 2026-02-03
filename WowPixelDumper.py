@@ -1,4 +1,3 @@
-
 import json
 import time
 import datetime
@@ -175,6 +174,10 @@ class CameraWorker(QThread):
         # 连接区域更新信号
         self.region_signal.connect(self.update_region)
 
+    # ============================================
+    # 区域管理
+    # ============================================
+
     def update_region(self, left: int, top: int, right: int, bottom: int) -> None:
         """
         更新捕获区域
@@ -187,6 +190,10 @@ class CameraWorker(QThread):
         geometry = screen.availableGeometry()
         self.right = right if right > 0 else geometry.width()
         self.bottom = bottom if bottom > 0 else geometry.height()
+
+    # ============================================
+    # 线程生命周期
+    # ============================================
 
     def run(self) -> None:
         """
@@ -248,6 +255,7 @@ class CameraWorker(QThread):
 class MainWindow(QWidget):
     """
     主窗口类
+    负责UI展示和用户交互
     """
 
     def __init__(self) -> None:
@@ -300,6 +308,10 @@ class MainWindow(QWidget):
         # 初始刷新窗口列表
         self.refresh_windows()
 
+    # ============================================
+    # UI初始化
+    # ============================================
+
     def init_ui(self) -> None:
         """
         初始化用户界面
@@ -307,33 +319,29 @@ class MainWindow(QWidget):
         main_layout = QVBoxLayout()
 
         # 创建第一层布局（控制栏）
-        self.create_l1_layout()
+        self.create_control_layout()
         main_layout.addLayout(self.l1_layout)
 
         # 创建第二层布局（数据显示区）
-        self.create_l2_layout()
+        self.create_display_layout()
         main_layout.addLayout(self.l2_layout)
 
         self.setLayout(main_layout)
 
-    def create_l1_layout(self) -> None:
+    def create_control_layout(self) -> None:
         """
         创建第一层布局：控制按钮和设置
         """
         self.l1_layout = QHBoxLayout()
         self.l1_left_layout = QHBoxLayout()
 
-        # ============================================
         # 窗口选择下拉框
-        # ============================================
         self.window_label = QLabel('选择窗口：')
         self.window_combo = QComboBox()
         self.window_combo.currentIndexChanged.connect(self.on_window_selected)
         self.window_combo.setFixedWidth(200)
 
-        # ============================================
         # FPS设置
-        # ============================================
         self.fps_label = QLabel('FPS：')
         self.fps_input = QLineEdit()
         self.fps_input.setValidator(QIntValidator(1, 20))
@@ -341,9 +349,7 @@ class MainWindow(QWidget):
         self.fps_input.setFixedWidth(60)
         self.fps_input.textChanged.connect(self.on_fps_changed)
 
-        # ============================================
         # 功能按钮
-        # ============================================
         self.refresh_windows_button = QPushButton('刷新窗口')
         self.refresh_windows_button.clicked.connect(self.refresh_windows)
 
@@ -363,9 +369,7 @@ class MainWindow(QWidget):
         self.l1_left_layout.addStretch()
         self.l1_left_layout.addWidget(self.refresh_button)
 
-        # ============================================
         # 右侧链接按钮
-        # ============================================
         self.l1_right_layout = QHBoxLayout()
         self.github_button = QPushButton('Github')
         self.github_button.clicked.connect(
@@ -383,15 +387,13 @@ class MainWindow(QWidget):
         self.l1_layout.addStretch()
         self.l1_layout.addLayout(self.l1_right_layout)
 
-    def create_l2_layout(self) -> None:
+    def create_display_layout(self) -> None:
         """
         创建第二层布局：数据显示和日志
         """
         self.l2_layout = QHBoxLayout()
 
-        # ============================================
         # 左侧数据显示区（75%宽度）
-        # ============================================
         self.l2l_layout = QVBoxLayout()
         self.data_display = QTextEdit()
         self.data_display.setReadOnly(True)
@@ -401,9 +403,7 @@ class MainWindow(QWidget):
         )
         self.l2l_layout.addWidget(self.data_display)
 
-        # ============================================
         # 右侧日志显示区（25%宽度）
-        # ============================================
         self.l2r_layout = QVBoxLayout()
         self.log_display = QTextEdit()
         self.log_display.setReadOnly(True)
@@ -412,6 +412,10 @@ class MainWindow(QWidget):
         # 设置拉伸比例
         self.l2_layout.addLayout(self.l2l_layout, 3)
         self.l2_layout.addLayout(self.l2r_layout, 1)
+
+    # ============================================
+    # 事件处理：设置变更
+    # ============================================
 
     def on_fps_changed(self, text: str) -> None:
         """
@@ -442,113 +446,6 @@ class MainWindow(QWidget):
 
         except ValueError:
             return
-
-    def handle_camera_data(self, cropped_array: np.ndarray, camera_statusuc: str) -> None:
-        """
-        处理相机捕获的图像数据
-        """
-        if camera_statusuc == "ok":
-            # 检查是否应该输出日志（避免弹窗期间刷屏）
-            should_log = not self.dialog_visible and not self.dialog_cooldown
-
-            try:
-                # 创建像素解析器
-                dumper = PixelDumper(cropped_array)
-
-                # 检查三个SI节点（用于技能图标识别）
-                si_node_1 = dumper.node(1, 17)
-                si_node_2 = dumper.node(15, 1)
-                si_node_3 = dumper.node(54, 14)
-
-                # 三个节点都非纯色且哈希相同，说明有新技能图标
-                if si_node_1.is_not_pure and si_node_2.is_not_pure and si_node_3.is_not_pure:
-                    if si_node_1.hash == si_node_2.hash == si_node_3.hash and (not hashstr_used(si_node_1.hash)):
-                        # 提示用户输入技能名称
-                        if should_log:
-                            self.log_display.append(
-                                f'SI节点1、2、3颜色相同，哈希值为: {si_node_1.hash}\n为这个hash值绑定什么技能？'
-                            )
-                        # 显示输入对话框
-                        if not self.dialog_visible and (not self.dialog_cooldown):
-                            self.show_hash_dialog(si_node_1.hash)
-
-                # 提取所有像素数据
-                dump_data = dumper.dump_all()
-                self.pixel_dump.clear()
-                self.pixel_dump.update(dump_data)
-
-                # 更新数据显示（如果刷新未暂停）
-                if self.data_refresh_enabled:
-                    self.data_display.setText(json.dumps(self.pixel_dump, indent=8, ensure_ascii=False))
-
-            except Exception as e:
-                timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                self.log_display.append(f"[{timestamp}] 处理图像数据时发生错误: {str(e)}")
-        else:
-            # 捕获失败记录错误
-            timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            self.log_display.append(f"[{timestamp}] 抓取窗口失败: {camera_statusuc}")
-
-    def show_hash_dialog(self, hash_value: str) -> None:
-        """
-        显示技能哈希绑定对话框
-        """
-        self.dialog_visible = True
-        self.log_display.append(f"[{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] 显示对话框")
-
-        # 弹出输入对话框
-        text, ok = QInputDialog.getText(self, '请输入Hash值对应的标题', f'标题({hash_value}):')
-
-        # 处理用户输入
-        if ok and text:
-            save_user_input_hash(hash_value, text)
-            self.log_display.append(f"[{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] 用户输入标题: {text}")
-        elif ok:
-            self.log_display.append(f"[{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] 用户未输入标题")
-        else:
-            self.log_display.append(f"[{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] 用户取消输入")
-
-        # 关闭对话框并设置冷却
-        self.dialog_visible = False
-        self.dialog_cooldown = True
-        QTimer.singleShot(3000, self.reset_dialog_cooldown)
-
-    def refresh_windows(self) -> None:
-        """
-        刷新窗口列表
-        """
-
-        # 窗口枚举回调函数
-        def callback(hwnd: int, windows: List[Tuple[int, str]]) -> bool:
-            if win32gui.IsWindowVisible(hwnd):
-                title = win32gui.GetWindowText(hwnd)
-                if "魔兽世界" in title:
-                    windows.append((hwnd, title))
-            return True
-
-        # 枚举所有窗口
-        windows: List[Tuple[int, str]] = []
-        win32gui.EnumWindows(callback, windows)
-
-        # 更新窗口列表
-        self.windows_handle_list = windows
-        self.window_combo.clear()
-
-        # 添加默认选项
-        self.window_combo.addItem("无窗口", None)
-
-        if windows:
-            # 添加所有找到的窗口
-            for hwnd, title in windows:
-                self.window_combo.addItem(f"{title} ({hwnd})", hwnd)
-            self.current_windows_handle = windows[0][0]
-            self.window_combo.setCurrentIndex(1)
-            log_message = f"[{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] 找到 {len(windows)} 个魔兽世界窗口"
-        else:
-            self.current_windows_handle = None
-            log_message = f"[{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] 未找到魔兽世界窗口"
-
-        self.log_display.append(log_message)
 
     def on_window_selected(self, index: int) -> None:
         """
@@ -593,10 +490,26 @@ class MainWindow(QWidget):
                 )
                 self.camera_worker.stop()
                 self.camera_worker = CameraWorker(self.current_windows_handle, self.current_fps)
-                self.camera_worker.data_signal.connect(self.handle_camera_data)
-                self.camera_worker.log_signal.connect(self.handle_camera_log)
+                self.camera_worker.data_signal.connect(self.process_captured_frame)
+                self.camera_worker.log_signal.connect(self.append_camera_log)
                 self.camera_worker.start()
                 self.camera_running = True
+
+    def on_refresh_button_clicked(self) -> None:
+        """
+        暂停/恢复刷新按钮处理
+        """
+        self.data_refresh_enabled = not self.data_refresh_enabled
+
+        if self.data_refresh_enabled:
+            self.refresh_button.setText('暂停刷新日志')
+            self.data_display.setText(json.dumps(self.pixel_dump, indent=2, ensure_ascii=False))
+        else:
+            self.refresh_button.setText('恢复刷新日志')
+
+    # ============================================
+    # 事件处理：相机控制
+    # ============================================
 
     def toggle_camera(self) -> None:
         """
@@ -635,8 +548,8 @@ class MainWindow(QWidget):
 
             # 创建并启动工作线程
             self.camera_worker = CameraWorker(self.current_windows_handle, self.current_fps)
-            self.camera_worker.data_signal.connect(self.handle_camera_data)
-            self.camera_worker.log_signal.connect(self.handle_camera_log)
+            self.camera_worker.data_signal.connect(self.process_captured_frame)
+            self.camera_worker.log_signal.connect(self.append_camera_log)
             self.camera_worker.region_signal.emit(left, top, right, bottom)
             self.camera_worker.start()
             self.camera_running = True
@@ -666,11 +579,131 @@ class MainWindow(QWidget):
                 f"[{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] CameraWorker 停止"
             )
 
-    def handle_camera_log(self, log_message: str) -> None:
+    # ============================================
+    # 事件处理：相机数据与日志
+    # ============================================
+
+    def process_captured_frame(self, cropped_array: np.ndarray, camera_status: str) -> None:
+        """
+        处理相机捕获的图像数据
+        解析像素数据并更新UI显示
+        """
+        if camera_status == "ok":
+            # 检查是否应该输出日志（避免弹窗期间刷屏）
+            should_log = not self.dialog_visible and not self.dialog_cooldown
+
+            try:
+                # 创建像素解析器
+                dumper = PixelDumper(cropped_array)
+
+                # 检查三个SI节点（用于技能图标识别）
+                si_node_1 = dumper.get_node(1, 17)
+                si_node_2 = dumper.get_node(15, 1)
+                si_node_3 = dumper.get_node(54, 14)
+
+                # 三个节点都非纯色且哈希相同，说明有新技能图标
+                if si_node_1.is_not_pure and si_node_2.is_not_pure and si_node_3.is_not_pure:
+                    if si_node_1.hash == si_node_2.hash == si_node_3.hash and (not hashstr_used(si_node_1.hash)):
+                        # 提示用户输入技能名称
+                        if should_log:
+                            self.log_display.append(
+                                f'SI节点1、2、3颜色相同，哈希值为: {si_node_1.hash}\n为这个hash值绑定什么技能？'
+                            )
+                        # 显示输入对话框
+                        if not self.dialog_visible and (not self.dialog_cooldown):
+                            self.show_hash_dialog(si_node_1.hash)
+
+                # 提取所有像素数据
+                dump_data = dumper.extract_all_data()
+                self.pixel_dump.clear()
+                self.pixel_dump.update(dump_data)
+
+                # 更新数据显示（如果刷新未暂停）
+                if self.data_refresh_enabled:
+                    self.data_display.setText(json.dumps(self.pixel_dump, indent=8, ensure_ascii=False))
+
+            except Exception as e:
+                timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                self.log_display.append(f"[{timestamp}] 处理图像数据时发生错误: {str(e)}")
+        else:
+            # 捕获失败记录错误
+            timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            self.log_display.append(f"[{timestamp}] 抓取窗口失败: {camera_status}")
+
+    def append_camera_log(self, log_message: str) -> None:
         """
         处理相机线程日志
         """
         self.log_display.append(log_message)
+
+    # ============================================
+    # 窗口管理
+    # ============================================
+
+    def refresh_windows(self) -> None:
+        """
+        刷新窗口列表
+        """
+
+        # 窗口枚举回调函数
+        def callback(hwnd: int, windows: List[Tuple[int, str]]) -> bool:
+            if win32gui.IsWindowVisible(hwnd):
+                title = win32gui.GetWindowText(hwnd)
+                if "魔兽世界" in title:
+                    windows.append((hwnd, title))
+            return True
+
+        # 枚举所有窗口
+        windows: List[Tuple[int, str]] = []
+        win32gui.EnumWindows(callback, windows)
+
+        # 更新窗口列表
+        self.windows_handle_list = windows
+        self.window_combo.clear()
+
+        # 添加默认选项
+        self.window_combo.addItem("无窗口", None)
+
+        if windows:
+            # 添加所有找到的窗口
+            for hwnd, title in windows:
+                self.window_combo.addItem(f"{title} ({hwnd})", hwnd)
+            self.current_windows_handle = windows[0][0]
+            self.window_combo.setCurrentIndex(1)
+            log_message = f"[{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] 找到 {len(windows)} 个魔兽世界窗口"
+        else:
+            self.current_windows_handle = None
+            log_message = f"[{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] 未找到魔兽世界窗口"
+
+        self.log_display.append(log_message)
+
+    # ============================================
+    # 对话框管理
+    # ============================================
+
+    def show_hash_dialog(self, hash_value: str) -> None:
+        """
+        显示技能哈希绑定对话框
+        """
+        self.dialog_visible = True
+        self.log_display.append(f"[{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] 显示对话框")
+
+        # 弹出输入对话框
+        text, ok = QInputDialog.getText(self, '请输入Hash值对应的标题', f'标题({hash_value}):')
+
+        # 处理用户输入
+        if ok and text:
+            save_user_input_hash(hash_value, text)
+            self.log_display.append(f"[{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] 用户输入标题: {text}")
+        elif ok:
+            self.log_display.append(f"[{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] 用户未输入标题")
+        else:
+            self.log_display.append(f"[{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] 用户取消输入")
+
+        # 关闭对话框并设置冷却
+        self.dialog_visible = False
+        self.dialog_cooldown = True
+        QTimer.singleShot(3000, self.reset_dialog_cooldown)
 
     def reset_dialog_cooldown(self) -> None:
         """
@@ -681,17 +714,9 @@ class MainWindow(QWidget):
             f"[{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] 对话框冷却已恢复"
         )
 
-    def on_refresh_button_clicked(self) -> None:
-        """
-        暂停/恢复刷新按钮处理
-        """
-        self.data_refresh_enabled = not self.data_refresh_enabled
-
-        if self.data_refresh_enabled:
-            self.refresh_button.setText('暂停刷新日志')
-            self.data_display.setText(json.dumps(self.pixel_dump, indent=2, ensure_ascii=False))
-        else:
-            self.refresh_button.setText('恢复刷新日志')
+    # ============================================
+    # 系统事件
+    # ============================================
 
     def closeEvent(self, event) -> None:
         """
