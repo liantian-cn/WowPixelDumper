@@ -187,9 +187,9 @@ def find_template_bounds(
     width = right - left
     height = bottom - top
 
-    # 检查尺寸是否为10的倍数
-    if width % 10 != 0 or height % 10 != 0:
-        raise ValueError(f"边界尺寸必须是10的倍数，但得到 {width} x {height}")
+    # 检查尺寸是否为6的倍数
+    if width % 6 != 0 or height % 6 != 0:
+        raise ValueError(f"边界尺寸必须是6的倍数，但得到 {width} x {height}")
 
     return (left, top, right, bottom)
 
@@ -203,15 +203,18 @@ class Node:
 
     @property
     def full(self) -> np.ndarray:
+        """完整节点 6x6，用于直接截取区域"""
         return self.pix_array
 
     @property
     def middle(self) -> np.ndarray:
-        return self.pix_array[1:9, 1:9]
+        """左上5x5区域，用于纯色判断/取色/哈希/白字识别"""
+        return self.pix_array[0:5, 0:5]
 
     @property
     def inner(self) -> np.ndarray:
-        return self.pix_array[3:7, 3:7]
+        """中间3x3区域，用于计算平均亮度（value值）"""
+        return self.pix_array[1:4, 1:4]
 
     @property
     def mean_value(self) -> np.floating:
@@ -242,7 +245,7 @@ class Node:
 
     @property
     def white_count_raw(self) -> int:
-        # 计算中间8x8区域中白色像素的数量
+        # 计算middle(5x5)区域中白色像素的数量，用于数字识别
         return int(np.count_nonzero(np.all(self.middle == (255, 255, 255), axis=2)))
 
     @property
@@ -320,12 +323,12 @@ class PixelDumper:
         self.pix_array = img_array
 
     def node(self, x: int, y: int) -> Node:
-        start_x = x * 10
-        start_y = y * 10
-        end_x = start_x + 10
-        end_y = start_y + 10
+        start_x = x * 6
+        start_y = y * 6
+        end_x = start_x + 6
+        end_y = start_y + 6
 
-        if x >= self.pix_array.shape[1] // 10 or y >= self.pix_array.shape[0] // 10:
+        if x >= self.pix_array.shape[1] // 6 or y >= self.pix_array.shape[0] // 6:
             raise ValueError(f"node索引 ({x},{y}) 超出范围")
 
         array = self.pix_array[start_y:end_y, start_x:end_x]
@@ -336,16 +339,15 @@ class PixelDumper:
     def read_health_bar(self, left: int, top: int, length: int) -> float:
         """
         对应插件内的CreateWhiteBar，读取区域内的计时条信息
-        方法，统计范围内所有色块(node)中第5和第6行的白色像素占比。
-        结果 = （第五行所有像素+第六行所有像素）/ （第五行所有像素+第六行所有像素）
+        方法，统计范围内所有色块(node)中第3和第4行(6x6节点中间2行)的白色像素占比
         """
-        # 先取出所有node的像素
-        nodes_5_6_pix = [self.node(x, top).full[4:6, :] for x in range(left, left + length)]
+        # 先取出所有node的中间2行像素
+        nodes_middle_pix = [self.node(x, top).full[2:4, :] for x in range(left, left + length)]
         # 统计第五行和第六行的白色像素数量
-        white_count = sum(np.count_nonzero(np.all(node == (255, 255, 255), axis=2)) for node in nodes_5_6_pix)
+        white_count = sum(np.count_nonzero(np.all(node == (255, 255, 255), axis=2)) for node in nodes_middle_pix)
         # 计算总像素数：动态计算每个node的像素数，避免硬编码
         # 对于每个node，计算其高度×宽度（不包括颜色通道维度）
-        total_count = sum(node.shape[0] * node.shape[1] for node in nodes_5_6_pix)
+        total_count = sum(node.shape[0] * node.shape[1] for node in nodes_middle_pix)
         # 计算结果
         result = white_count / total_count
         return result
@@ -418,7 +420,7 @@ class PixelDumper:
                 aura_remaining = remain_node.remaining
             else:
                 aura_remaining = None
-            if type_node.color_string in ColorMap["BuffType"]:
+            if type_node.is_pure and type_node.color_string in ColorMap["BuffType"]:
                 aura_type = ColorMap["BuffType"][type_node.color_string]
             else:
                 aura_type = "Unknown"
@@ -440,122 +442,125 @@ class PixelDumper:
         return result_sequence, result_dict
 
     def dump_all(self) -> dict:
-        result = {}
-        result["timestamp"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        result["misc"] = {}
-        result["misc"]["ac"] = self.node(26, 6).title
+        data = {}
+        data["timestamp"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        data["misc"] = {}
+        data["misc"]["ac"] = self.node(26, 6).title
 
-        result["spec"] = {}
-        result["player"] = {}
-        result["target"] = {}
-        result["focus"] = {}
-        result["player"]["aura"] = {}
-        result["target"]["aura"] = {}
-        result["focus"]["aura"] = {}
+        data["spec"] = {}
+        data["player"] = {}
+        data["target"] = {}
+        data["focus"] = {}
+        data["player"]["aura"] = {}
+        data["target"]["aura"] = {}
+        data["focus"]["aura"] = {}
 
-        result["player"]["aura"]["buff"], result["player"]["aura"]["buff_dict"] = self.read_aura_sequence(left=2, top=2, length=28)
-        result["player"]["aura"]["debuff"], result["player"]["aura"]["debuff_dict"] = self.read_aura_sequence(left=30, top=2, length=7)
-        result["target"]["aura"]["debuff"], result["target"]["aura"]["debuff_dict"] = self.read_aura_sequence(left=47, top=2, length=7)
-        result["focus"]["aura"]["debuff"], result["focus"]["aura"]["debuff_dict"] = self.read_aura_sequence(left=47, top=6, length=7)
+        data["player"]["aura"]["buff"], data["player"]["aura"]["buff_dict"] = self.read_aura_sequence(left=2, top=2, length=28)
+        data["player"]["aura"]["debuff"], data["player"]["aura"]["debuff_dict"] = self.read_aura_sequence(left=30, top=2, length=7)
+        data["target"]["aura"]["debuff"], data["target"]["aura"]["debuff_dict"] = self.read_aura_sequence(left=47, top=2, length=7)
+        data["focus"]["aura"]["debuff"], data["focus"]["aura"]["debuff_dict"] = self.read_aura_sequence(left=47, top=6, length=7)
         #
-        result["player"]["spell_sequence"], result["player"]["spell"] = self.read_spell_sequence(left=2, top=6, length=24)
+        data["player"]["spell_sequence"], data["player"]["spell"] = self.read_spell_sequence(left=2, top=6, length=24)
         # 读取伤害吸收和治疗吸收
-        result["player"]["status"] = {}
-        result["player"]["status"]["damage_absorbs"] = self.read_health_bar(left=37, top=4, length=10) * 100
-        result["player"]["status"]["heal_absorbs"] = self.read_health_bar(left=37, top=5, length=10) * 100
-        result["player"]["status"]["health"] = self.node(46, 2).value_percent
-        result["player"]["status"]["power"] = self.node(46, 3).value_percent
+        data["player"]["status"] = {}
+        data["player"]["status"]["damage_absorbs"] = self.read_health_bar(left=37, top=4, length=10) * 100
+        data["player"]["status"]["heal_absorbs"] = self.read_health_bar(left=37, top=5, length=10) * 100
+        data["player"]["status"]["health"] = self.node(46, 2).value_percent
+        data["player"]["status"]["power"] = self.node(46, 3).value_percent
 
-        result["player"]["status"]["in_combat"] = self.node(37, 2).is_white
-        result["player"]["status"]["in_movement"] = self.node(38, 2).is_white
-        result["player"]["status"]["in_vehicle"] = self.node(39, 2).is_white
-        result["player"]["status"]["is_empowered"] = self.node(40, 2).is_white
+        data["player"]["status"]["in_combat"] = self.node(37, 2).is_white
+        data["player"]["status"]["in_movement"] = self.node(38, 2).is_white
+        data["player"]["status"]["in_vehicle"] = self.node(39, 2).is_white
+        data["player"]["status"]["is_empowered"] = self.node(40, 2).is_white
 
-        result["player"]["status"]["cast_icon"] = None
-        result["player"]["status"]["cast_duration"] = None
+        data["player"]["status"]["cast_icon"] = None
+        data["player"]["status"]["cast_duration"] = None
         if self.node(41, 2).is_not_pure:
-            result["player"]["status"]["cast_icon"] = self.node(41, 2).title
-            result["player"]["status"]["cast_duration"] = self.node(42, 2).value_percent
+            data["player"]["status"]["cast_icon"] = self.node(41, 2).title
+            data["player"]["status"]["cast_duration"] = self.node(42, 2).value_percent
 
-        result["player"]["status"]["channel_icon"] = None
-        result["player"]["status"]["channel_duration"] = None
+        data["player"]["status"]["channel_icon"] = None
+        data["player"]["status"]["channel_duration"] = None
         if self.node(43, 2).is_not_pure:
-            result["player"]["status"]["channel_icon"] = self.node(43, 2).title
-            result["player"]["status"]["channel_duration"] = self.node(44, 2).value_percent
+            data["player"]["status"]["channel_icon"] = self.node(43, 2).title
+            data["player"]["status"]["channel_duration"] = self.node(44, 2).value_percent
+        if self.node(37, 3).is_pure:
+            data["player"]["status"]["class"] = ColorMap["Class"].get(self.node(37, 3).color_string, "NONE")
+        if self.node(38, 3).is_pure:
+            data["player"]["status"]["role"] = ColorMap["Role"].get(self.node(38, 3).color_string, "NONE")
 
-        result["player"]["status"]["class"] = ColorMap["Class"].get(self.node(37, 3).color_string, "NONE")
-        result["player"]["status"]["role"] = ColorMap["Role"].get(self.node(38, 3).color_string, "NONE")
+        data["player"]["status"]["deaded"] = self.node(39, 3).is_white
 
-        result["target"]["status"] = {}
-        result["target"]["status"]["exists"] = self.node(39, 6).is_white
-        if result["target"]["status"]["exists"]:
-            result["target"]["status"]["can_attack"] = self.node(40, 6).is_white
-            result["target"]["status"]["is_self"] = self.node(41, 6).is_white
-            result["target"]["status"]["alive"] = self.node(42, 6).is_white
-            result["target"]["status"]["in_combat"] = self.node(43, 6).is_white
-            result["target"]["status"]["in_range"] = self.node(44, 6).is_white
-            result["target"]["status"]["health"] = self.node(46, 6).value_percent
+        data["target"]["status"] = {}
+        data["target"]["status"]["exists"] = self.node(39, 6).is_white
+        if data["target"]["status"]["exists"]:
+            data["target"]["status"]["can_attack"] = self.node(40, 6).is_white
+            data["target"]["status"]["is_self"] = self.node(41, 6).is_white
+            data["target"]["status"]["alive"] = self.node(42, 6).is_white
+            data["target"]["status"]["in_combat"] = self.node(43, 6).is_white
+            data["target"]["status"]["in_range"] = self.node(44, 6).is_white
+            data["target"]["status"]["health"] = self.node(46, 6).value_percent
 
-            result["target"]["status"]["cast_icon"] = None
-            result["target"]["status"]["cast_duration"] = None
-            result["target"]["status"]["cast_interruptible"] = None
+            data["target"]["status"]["cast_icon"] = None
+            data["target"]["status"]["cast_duration"] = None
+            data["target"]["status"]["cast_interruptible"] = None
             if self.node(39, 7).is_not_pure:
-                result["target"]["status"]["cast_icon"] = self.node(39, 7).title
-                result["target"]["status"]["cast_duration"] = self.node(40, 7).value_percent
-                result["target"]["status"]["cast_interruptible"] = self.node(41, 7).is_white
+                data["target"]["status"]["cast_icon"] = self.node(39, 7).title
+                data["target"]["status"]["cast_duration"] = self.node(40, 7).value_percent
+                data["target"]["status"]["cast_interruptible"] = self.node(41, 7).is_white
 
-            result["target"]["status"]["channel_icon"] = None
-            result["target"]["status"]["channel_duration"] = None
-            result["target"]["status"]["channel_interruptible"] = None
+            data["target"]["status"]["channel_icon"] = None
+            data["target"]["status"]["channel_duration"] = None
+            data["target"]["status"]["channel_interruptible"] = None
             if self.node(42, 7).is_not_pure:
-                result["target"]["status"]["channel_icon"] = self.node(42, 7).title
-                result["target"]["status"]["channel_duration"] = self.node(43, 7).value_percent
-                result["target"]["status"]["channel_interruptible"] = self.node(44, 7).is_white
-        result["focus"]["status"] = {}
-        result["focus"]["status"]["exists"] = self.node(39, 8).is_white
-        if result["focus"]["status"]["exists"]:
-            result["focus"]["status"]["can_attack"] = self.node(40, 8).is_white
-            result["focus"]["status"]["is_self"] = self.node(41, 8).is_white
-            result["focus"]["status"]["alive"] = self.node(42, 8).is_white
-            result["focus"]["status"]["in_combat"] = self.node(43, 8).is_white
-            result["focus"]["status"]["in_range"] = self.node(44, 8).is_white
-            result["focus"]["status"]["health"] = self.node(46, 8).value_percent
+                data["target"]["status"]["channel_icon"] = self.node(42, 7).title
+                data["target"]["status"]["channel_duration"] = self.node(43, 7).value_percent
+                data["target"]["status"]["channel_interruptible"] = self.node(44, 7).is_white
+        data["focus"]["status"] = {}
+        data["focus"]["status"]["exists"] = self.node(39, 8).is_white
+        if data["focus"]["status"]["exists"]:
+            data["focus"]["status"]["can_attack"] = self.node(40, 8).is_white
+            data["focus"]["status"]["is_self"] = self.node(41, 8).is_white
+            data["focus"]["status"]["alive"] = self.node(42, 8).is_white
+            data["focus"]["status"]["in_combat"] = self.node(43, 8).is_white
+            data["focus"]["status"]["in_range"] = self.node(44, 8).is_white
+            data["focus"]["status"]["health"] = self.node(46, 8).value_percent
 
-            result["focus"]["status"]["cast_icon"] = None
-            result["focus"]["status"]["cast_duration"] = None
-            result["focus"]["status"]["cast_interruptible"] = None
+            data["focus"]["status"]["cast_icon"] = None
+            data["focus"]["status"]["cast_duration"] = None
+            data["focus"]["status"]["cast_interruptible"] = None
             if self.node(39, 9).is_not_pure:
-                result["focus"]["status"]["cast_icon"] = self.node(39, 9).title
-                result["focus"]["status"]["cast_duration"] = self.node(40, 9).value_percent
-                result["focus"]["status"]["cast_interruptible"] = self.node(41, 9).is_white
+                data["focus"]["status"]["cast_icon"] = self.node(39, 9).title
+                data["focus"]["status"]["cast_duration"] = self.node(40, 9).value_percent
+                data["focus"]["status"]["cast_interruptible"] = self.node(41, 9).is_white
 
-            result["focus"]["status"]["channel_icon"] = None
-            result["focus"]["status"]["channel_duration"] = None
-            result["focus"]["status"]["channel_interruptible"] = None
+            data["focus"]["status"]["channel_icon"] = None
+            data["focus"]["status"]["channel_duration"] = None
+            data["focus"]["status"]["channel_interruptible"] = None
             if self.node(42, 9).is_not_pure:
-                result["focus"]["status"]["channel_icon"] = self.node(42, 9).title
-                result["focus"]["status"]["channel_duration"] = self.node(43, 9).value_percent
-                result["focus"]["status"]["channel_interruptible"] = self.node(44, 9).is_white
-        result["party"] = {}
+                data["focus"]["status"]["channel_icon"] = self.node(42, 9).title
+                data["focus"]["status"]["channel_duration"] = self.node(43, 9).value_percent
+                data["focus"]["status"]["channel_interruptible"] = self.node(44, 9).is_white
+        data["party"] = {}
         for i in range(1, 5):
-            result["party"][f"party{i}"] = {}
+            data["party"][f"party{i}"] = {}
             party_exist = self.node(13*i-1, 14).is_white
 
-            result["party"][f"party{i}"]["exists"] = party_exist
+            data["party"][f"party{i}"]["exists"] = party_exist
             if party_exist:
-                result["party"][f"party{i}"]["status"] = {}
-                result["party"][f"party{i}"]["aura"] = {}
-                result["party"][f"party{i}"]["status"]["in_range"] = self.node(13*i, 14).is_white
-                result["party"][f"party{i}"]["status"]["health"] = self.node(13*i+1, 14).value_percent
-                result["party"][f"party{i}"]["status"]["class"] = ColorMap["Class"].get(self.node(13*i+-1, 15).color_string, "NONE")
-                result["party"][f"party{i}"]["status"]["role"] = ColorMap["Role"].get(self.node(13*i, 15).color_string, "NONE")
-                result["party"][f"party{i}"]["status"]["damage_absorbs"] = self.read_health_bar(left=13*i+-11, top=14, length=10) * 100
-                result["party"][f"party{i}"]["status"]["heal_absorbs"] = self.read_health_bar(left=13*i+-11, top=15, length=10) * 100
+                data["party"][f"party{i}"]["status"] = {}
+                data["party"][f"party{i}"]["aura"] = {}
+                data["party"][f"party{i}"]["status"]["in_range"] = self.node(13*i, 14).is_white
+                data["party"][f"party{i}"]["status"]["health"] = self.node(13*i+1, 14).value_percent
+                class_node = self.node(13*i-1, 15)
+                data["party"][f"party{i}"]["status"]["class"] = ColorMap["Class"].get(class_node.color_string, "NONE") if class_node.is_pure else "NONE"
+                role_node = self.node(13*i, 15)
+                data["party"][f"party{i}"]["status"]["role"] = ColorMap["Role"].get(role_node.color_string, "NONE") if role_node.is_pure else "NONE"
+                data["party"][f"party{i}"]["status"]["selectd"] = self.node(13*i+1, 15).is_white
+                data["party"][f"party{i}"]["status"]["damage_absorbs"] = self.read_health_bar(left=13*i+-11, top=14, length=10) * 100
+                data["party"][f"party{i}"]["status"]["heal_absorbs"] = self.read_health_bar(left=13*i+-11, top=15, length=10) * 100
 
-                result["party"][f"party{i}"]["aura"]["buff"], result["party"][f"party{i}"]["aura"]["buff_dict"] = self.read_aura_sequence(left=13*i+-11, top=10, length=7)
-                result["party"][f"party{i}"]["aura"]["debuff"], result["party"][f"party{i}"]["aura"]["debuff_dict"] = self.read_aura_sequence(left=13*i+-4, top=10, length=6)
+                data["party"][f"party{i}"]["aura"]["buff"], data["party"][f"party{i}"]["aura"]["buff_dict"] = self.read_aura_sequence(left=13*i+-11, top=10, length=7)
+                data["party"][f"party{i}"]["aura"]["debuff"], data["party"][f"party{i}"]["aura"]["debuff_dict"] = self.read_aura_sequence(left=13*i+-4, top=10, length=6)
 
-# 	施法图标	施法进度	通道法术图标	通道法术进度
-# 职业	职责
-
-        return result
+        return data

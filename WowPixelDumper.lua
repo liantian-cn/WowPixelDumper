@@ -141,8 +141,8 @@ end
 -- 初始化主框架
 local function InitializeMainFrame()
     -- 计算UI元素尺寸
-    addonTable.nodeSize = GetUIScaleFactor(10 * scale)
-    addonTable.innerSize = GetUIScaleFactor(8 * scale)
+    addonTable.nodeSize = GetUIScaleFactor(6 * scale)
+    addonTable.innerSize = GetUIScaleFactor(5 * scale)
     addonTable.padSize = GetUIScaleFactor(1 * scale)
     addonTable.fontSize = GetUIScaleFactor(6 * scale)
     local node_size = addonTable.nodeSize
@@ -353,7 +353,7 @@ local function CreatePixelNode(x, y, title, parent_frame)
     local padSize = addonTable.padSize
     local innerSize = addonTable.innerSize
     local nodeFrame = CreateFrame("Frame", addonName .. "Pixel" .. title, parent_frame)
-    nodeFrame:SetPoint("TOPLEFT", parent_frame, "TOPLEFT", x * node_size + padSize, -y * node_size - padSize)
+    nodeFrame:SetPoint("TOPLEFT", parent_frame, "TOPLEFT", x * node_size, -y * node_size)
     nodeFrame:SetFrameLevel(parent_frame:GetFrameLevel() + 1)
     nodeFrame:SetSize(innerSize, innerSize)
     nodeFrame:Show()
@@ -371,7 +371,7 @@ local function CreateStringNode(x, y, title, parent_frame)
     local innerSize = addonTable.innerSize
     local fontSize = addonTable.fontSize
     local nodeFrame = CreateFrame("Frame", addonName .. "String" .. title, parent_frame)
-    nodeFrame:SetPoint("TOPLEFT", parent_frame, "TOPLEFT", x * node_size + padSize, -y * node_size - padSize)
+    nodeFrame:SetPoint("TOPLEFT", parent_frame, "TOPLEFT", x * node_size, -y * node_size)
     nodeFrame:SetFrameLevel(parent_frame:GetFrameLevel() + 1)
     nodeFrame:SetSize(innerSize, innerSize)
     nodeFrame:Show()
@@ -578,6 +578,8 @@ local function InitializePlayerStatusFrame()
     local player_class = CreatePixelNode(x, y, "PlayerClass", addonTable.PlayerStatusFrame)
     x = 1
     local player_role = CreatePixelNode(x, y, "PlayerRole", addonTable.PlayerStatusFrame)
+    x = 2
+    local player_deaded = CreatePixelNode(x, y, "PlayerDeaded", addonTable.PlayerStatusFrame)
 
     y = 0
     x = 9
@@ -608,6 +610,7 @@ local function InitializePlayerStatusFrame()
         else
             player_in_vehicle:SetColorTexture(0, 0, 0, 1)
         end
+
 
         local _, _, CastTextureID, _, _, _, _, _, _, _ = UnitCastingInfo("player")
         if CastTextureID then
@@ -645,6 +648,12 @@ local function InitializePlayerStatusFrame()
         -- 检查角色
         local role = UnitGroupRolesAssigned("player")
         player_role:SetColorTexture(COLOR.ROLE[role]:GetRGBA())
+
+        if UnitIsDeadOrGhost("player") then
+            player_deaded:SetColorTexture(1, 1, 1, 1)
+        else
+            player_deaded:SetColorTexture(0, 0, 0, 1)
+        end
 
         local maxHealth = UnitHealthMax("player")
 
@@ -775,6 +784,7 @@ local function InitializePartyFrame()
         local unit_health = CreatePixelNode(2, 0, addonName .. "PartyHealth" .. i, status_frame)
         local unit_class = CreatePixelNode(0, 1, addonName .. "PartyClass" .. i, status_frame)
         local unit_role = CreatePixelNode(1, 1, addonName .. "PartyRole" .. i, status_frame)
+        local unit_select = CreatePixelNode(2, 1, addonName .. "PartySelect" .. i, status_frame)
 
         -- 创建队伍吸收条
         local DamageAbsorbsBar = CreateWhiteBar(UnitKey .. "DamageAbsorbsBar", bar_frame, 0, 0, 10, 1)
@@ -805,6 +815,12 @@ local function InitializePartyFrame()
 
                 unit_health:SetColorTexture(UnitHealthPercent(UnitKey, true, curve):GetRGBA())
 
+                if UnitIsUnit("target", UnitKey) then
+                    unit_select:SetColorTexture(1, 1, 1, 1)
+                else
+                    unit_select:SetColorTexture(0, 0, 0, 1)
+                end
+
                 local maxHealth = UnitHealthMax(UnitKey)
                 DamageAbsorbsBar:SetMinMaxValues(0, maxHealth)
                 DamageAbsorbsBar:SetValue(UnitGetTotalAbsorbs(UnitKey))
@@ -817,6 +833,7 @@ local function InitializePartyFrame()
                 unit_class:SetColorTexture(0, 0, 0, 1)
                 unit_role:SetColorTexture(0, 0, 0, 1)
                 unit_health:SetColorTexture(0, 0, 0, 1)
+                unit_select:SetColorTexture(0, 0, 0, 1)
 
                 DamageAbsorbsBar:SetValue(0)
                 HealAbsorbsBar:SetValue(0)

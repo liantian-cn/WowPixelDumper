@@ -3,6 +3,7 @@ local addonName, addonTable             = ...
 local className, classFilename, classId = UnitClass("player")
 local currentSpec                       = GetSpecialization()
 
+-- PriestDiscipline
 if classFilename == "PRIEST" and currentSpec == 1 then
     table.insert(addonTable.Spell, { spellID = 47540, type = "charge" })    -- [苦修]
     table.insert(addonTable.Spell, { spellID = 194509, type = "charge" })   -- [真言术：耀]
