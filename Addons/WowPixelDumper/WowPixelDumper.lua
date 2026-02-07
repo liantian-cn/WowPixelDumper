@@ -1007,6 +1007,10 @@ local function InitializeMiscFrame()
     local x = 0
     local y = 0
     local assisted_combat = CreatePixelNode(x, y, "AssistedCombat", addonTable.MiscFrame)
+    x = 1
+    local on_chat = CreatePixelNode(x, y, "OnChat", addonTable.MiscFrame)
+    x = 2
+    local is_targeting = CreatePixelNode(x, y, "IsTargeting", addonTable.MiscFrame)
 
     -- 更新杂项状态函数
     local function UpdateStatus()
@@ -1016,6 +1020,19 @@ local function InitializeMiscFrame()
             assisted_combat:SetTexture(originalIconID)
         else
             assisted_combat:SetColorTexture(0, 0, 0, 1)
+        end
+
+        local f = GetCurrentKeyBoardFocus()
+        if f then
+            on_chat:SetColorTexture(1, 1, 1, 1)
+        else
+            on_chat:SetColorTexture(0, 0, 0, 1)
+        end
+
+        if SpellIsTargeting() then
+            is_targeting:SetColorTexture(1, 1, 1, 1)
+        else
+            is_targeting:SetColorTexture(0, 0, 0, 1)
         end
     end
     table.insert(UpdateFuncs, UpdateStatus)

@@ -35,6 +35,8 @@ def extract_all_data(extractor: NodeExtractor) -> dict[str, Any]:
     try:
         # 护甲类型标识（节点 26,6）
         data['misc']['ac'] = extractor.node(34, 5).title
+        data['misc']['on_chat'] = extractor.node(35, 5).is_white
+        data['misc']['is_targeting'] = extractor.node(36, 5).is_white
 
         ####### 玩家状态 #######
 
