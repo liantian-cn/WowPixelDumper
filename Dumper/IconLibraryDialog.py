@@ -416,8 +416,8 @@ class IconLibraryDialog(QDialog):
         )
 
         if ok and new_title and new_title != current_title:
-            if self.title_manager.update_title(record_id, new_title):
-                QMessageBox.information(self, '成功', '标题已更新')
+            if self.title_manager.update_title(record_id, new_title, match_type='manual'):
+                QMessageBox.information(self, '成功', '标题已更新，类型已设为手动添加')
                 self.refresh_database_tab()
             else:
                 QMessageBox.warning(self, '失败', '更新失败')

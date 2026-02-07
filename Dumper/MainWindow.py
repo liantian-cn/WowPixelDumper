@@ -522,43 +522,30 @@ class MainWindow(QWidget):
                 extractor: NodeExtractor = NodeExtractor(frame)
 
                 ####### 遮挡检测 #######
-                node_1_17 = extractor.node(1, 17)
-                node_54_1 = extractor.node(54, 1)
+                node_1_16 = extractor.node(1, 16)
+                node_50_1 = extractor.node(50, 1)
                 node_1_1 = extractor.node(1, 1)
-                node_54_16 = extractor.node(54, 16)
-                node_54_4 = extractor.node(54, 4)
+                node_50_16 = extractor.node(50, 16)
+                node_51_4 = extractor.node(51, 4)
 
-                # 检查条件：
-                # 1. (1,17) 和 (54,1) 是黑色
-                # 2. (1,1) 和 (54,16) 是纯色且颜色相同
-                # 3. (54,4) 不是纯色
                 validation_errors: list[str] = []
 
-                # 检查 (1,17) 应为黑色
-                if not node_1_17.is_black:
-                    validation_errors.append(f'(1,17)应为黑色')
+                if not node_1_16.is_black:
+                    validation_errors.append(f'(1,16)应为黑色')
 
-                # 检查 (54,1) 应为黑色
-                if not node_54_1.is_black:
-                    validation_errors.append(f'(54,1)应为黑色')
+                if not node_50_1.is_black:
+                    validation_errors.append(f'(50,1)应为黑色')
 
-                # 检查 (1,1) 应为纯色
                 if not node_1_1.is_pure:
                     validation_errors.append(f'(1,1)应为纯色(参考色)')
+                if not node_50_16.is_pure:
+                    validation_errors.append(f'(50,16)应为纯色(参考色)')
 
-                # 检查 (54,16) 应为纯色
-                if not node_54_16.is_pure:
-                    validation_errors.append(f'(54,16)应为纯色(参考色)')
-
-                # 检查 (1,1) 和 (54,16) 颜色相同
-                if node_1_1.is_pure and node_54_16.is_pure:
-                    if node_1_1.color_string != node_54_16.color_string:
-                        validation_errors.append(f'(1,1)和(54,16)颜色不匹配: {node_1_1.color_string} != {node_54_16.color_string}')
-
-                # 检查 (54,4) 应为非纯色(数据区)
-
-                if node_54_4.is_pure:
-                    validation_errors.append(f'(54,4)应为非纯色(数据区)')
+                if node_1_1.is_pure and node_50_16.is_pure:
+                    if node_1_1.color_string != node_50_16.color_string:
+                        validation_errors.append(f'(1,1)和(50,16)颜色不匹配: {node_1_1.color_string} != {node_50_16.color_string}')
+                if node_51_4.is_pure:
+                    validation_errors.append(f'(51,4)应为非纯色(数据区)')
 
                 if validation_errors:
                     self.pixel_dump.clear()

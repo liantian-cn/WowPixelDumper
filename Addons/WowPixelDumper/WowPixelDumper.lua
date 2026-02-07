@@ -7,11 +7,59 @@ local fontFile              = "Interface\\Addons\\" .. addonName .. "\\Fonts\\Cu
 
 -- 日志输出函数
 local logging               = function(msg)
-    print("|cFFFFBB66[" .. addonName .. "]|r", msg)
+    print("|cFFFFBB66[WPD]|r" .. tostring(msg))
 end
 
+
+-- 本地化提高性能
+local CreateFrame = CreateFrame
+-- Unit
+local UnitHealthPercent = UnitHealthPercent
+local UnitPowerPercent = UnitPowerPercent
+local UnitGetTotalHealAbsorbs = UnitGetTotalHealAbsorbs
+local UnitGetTotalAbsorbs = UnitGetTotalAbsorbs
+local UnitClass = UnitClass
+local UnitGroupRolesAssigned = UnitGroupRolesAssigned
+local UnitIsUnit = UnitIsUnit
+local UnitIsDeadOrGhost = UnitIsDeadOrGhost
+local UnitChannelDuration = UnitChannelDuration
+local UnitCastingDuration = UnitCastingDuration
+local UnitInVehicle = UnitInVehicle
+local GetUnitSpeed = GetUnitSpeed
+local UnitAffectingCombat = UnitAffectingCombat
+local UnitCastingInfo = UnitCastingInfo
+local UnitChannelInfo = UnitChannelInfo
+-- C_Spell
+local IsSpellUsable = C_Spell.IsSpellUsable
+local GetSpellTexture = C_Spell.GetSpellTexture
+local GetSpellCharges = C_Spell.GetSpellCharges
+local GetSpellChargeDuration = C_Spell.GetSpellChargeDuration
+local GetSpellCooldownDuration = C_Spell.GetSpellCooldownDuration
+local GetSpellLink = C_Spell.GetSpellLink
+-- C_SpellBook
+local IsSpellInSpellBook = C_SpellBook.IsSpellInSpellBook
+-- C_CurveUtil
+local CreateColorCurve = C_CurveUtil.CreateColorCurve
+local EvaluateColorFromBoolean = C_CurveUtil.EvaluateColorFromBoolean
+-- C_UnitAuras
+local GetUnitAuraInstanceIDs = C_UnitAuras.GetUnitAuraInstanceIDs
+local GetAuraDataByAuraInstanceID = C_UnitAuras.GetAuraDataByAuraInstanceID
+local GetAuraDuration = C_UnitAuras.GetAuraDuration
+local GetAuraApplicationDisplayCount = C_UnitAuras.GetAuraApplicationDisplayCount
+local GetAuraDispelTypeColor = C_UnitAuras.GetAuraDispelTypeColor
+local DoesAuraHaveExpirationTime = C_UnitAuras.DoesAuraHaveExpirationTime
+-- C_CooldownViewer
+local GetCooldownViewerCategorySet = C_CooldownViewer.GetCooldownViewerCategorySet
+local GetCooldownViewerCooldownInfo = C_CooldownViewer.GetCooldownViewerCooldownInfo
+-- C_SpellActivationOverlay
+local IsSpellOverlayed = C_SpellActivationOverlay.IsSpellOverlayed
+-- C_AssistedCombat
+local GetNextCastSpell = C_AssistedCombat.GetNextCastSpell
+
+
+
 -- 颜色定义表
-local COLOR                 = {
+local COLOR = {
     RED = CreateColor(255 / 255, 0, 0, 1),
     GREEN = CreateColor(0, 255 / 255, 0, 1),
     BLUE = CreateColor(0, 0, 255 / 255, 1),
@@ -22,7 +70,7 @@ local COLOR                 = {
         POISON = CreateColor(123 / 255, 199 / 255, 0, 1),        -- 中毒
         ENRAGE = CreateColor(255 / 255, 40 / 255, 0, 1),         -- 激怒 (深红色，代表愤怒和爆发)
         BLEED = CreateColor(184 / 255, 0, 15 / 255, 1),          -- 流血
-        NONE = CreateColor(0, 0, 0, 1),                          -- 无debuff
+        NONE = CreateColor(0, 0, 0, 0),                          -- 无debuff
     },
     NEAR_BLACK_1 = CreateColor(15 / 255, 25 / 255, 20 / 255, 1), -- 接近黑色
     NEAR_BLACK_2 = CreateColor(25 / 255, 15 / 255, 20 / 255, 1), -- 接近黑色
@@ -58,19 +106,19 @@ local COLOR                 = {
 }
 
 -- 颜色曲线定义
-local curve                 = C_CurveUtil.CreateColorCurve()
+local curve = CreateColorCurve()
 curve:SetType(Enum.LuaCurveType.Linear)
 curve:AddPoint(0.0, CreateColor(0, 0, 0, 1))
 curve:AddPoint(1.0, CreateColor(1, 1, 1, 1))
 
 -- 反向颜色曲线定义
-local curve_reverse = C_CurveUtil.CreateColorCurve()
+local curve_reverse = CreateColorCurve()
 curve_reverse:SetType(Enum.LuaCurveType.Linear)
 curve_reverse:AddPoint(0.0, CreateColor(1, 1, 1, 1))
 curve_reverse:AddPoint(1.0, CreateColor(0, 0, 0, 1))
 
 -- Debuff颜色曲线定义
-local debuff_curve = C_CurveUtil.CreateColorCurve()
+local debuff_curve = CreateColorCurve()
 debuff_curve:AddPoint(0, COLOR.DEBUFF.NONE)
 debuff_curve:AddPoint(1, COLOR.DEBUFF.MAGIC)
 debuff_curve:AddPoint(2, COLOR.DEBUFF.CURSE)
@@ -80,7 +128,7 @@ debuff_curve:AddPoint(9, COLOR.DEBUFF.ENRAGE)
 debuff_curve:AddPoint(11, COLOR.DEBUFF.BLEED)
 
 -- 剩余时间颜色曲线定义
-local remaining_curve = C_CurveUtil.CreateColorCurve()
+local remaining_curve = CreateColorCurve()
 remaining_curve:SetType(Enum.LuaCurveType.Linear)
 remaining_curve:AddPoint(0.0, COLOR.C0)
 remaining_curve:AddPoint(5.0, COLOR.C100)
@@ -95,7 +143,7 @@ local UpdateFuncs    = {}
 -- 技能表，每个技能有两种显示方式："cooldown"和"charge"
 addonTable.Spell     = {}
 -- 添加GCD技能到技能表
-table.insert(addonTable.Spell, { spellID = 61304, type = "cooldown" })
+
 
 
 -- 创建主框架
@@ -163,14 +211,15 @@ end
 local function InitializeMainFrame()
     -- 计算UI元素尺寸
     addonTable.nodeSize = GetUIScaleFactor(8 * scale)
-    addonTable.innerSize = GetUIScaleFactor(8 * scale)
+    -- addonTable.innerSize = GetUIScaleFactor(8 * scale)
     addonTable.padSize = GetUIScaleFactor(1 * scale)
     addonTable.fontSize = GetUIScaleFactor(6 * scale)
+    addonTable.footnoteSize = GetUIScaleFactor(3 * scale)
 
     -- 创建主框架
     addonTable.MainFrame = CreateFrame("Frame", addonName .. "MainFrame", UIParent)
     addonTable.MainFrame:SetPoint("TOPRIGHT", UIParent, "TOPRIGHT", 0, 0)
-    addonTable.MainFrame:SetSize(addonTable.nodeSize * 56, addonTable.nodeSize * 18)
+    addonTable.MainFrame:SetSize(addonTable.nodeSize * 52, addonTable.nodeSize * 18)
     addonTable.MainFrame:SetFrameStrata("TOOLTIP")
     addonTable.MainFrame:SetFrameLevel(900)
     addonTable.MainFrame:Show()
@@ -190,26 +239,25 @@ local function InitializeMainFrame()
         green = CreateColor(84 / 255, 130 / 255, 53 / 255, 1),
         lightGreen = CreateColor(112 / 255, 173 / 255, 71 / 255, 1),
     }
-
+    addonTable.PlayerSpellFrame = CreateStandardFrame("PlayerSpellFrame", addonTable.MainFrame, 2, 2, 36, 3, debugColors.green)
     -- 使用CreateStandardFrame创建子框架
-    addonTable.PlayerBuffFrame = CreateStandardFrame("PlayerBuffFrame", addonTable.MainFrame, 2, 2, 28, 4, debugColors.blue)
-    addonTable.PlayerDebuffFrame = CreateStandardFrame("PlayerDebuffFrame", addonTable.MainFrame, 30, 2, 7, 4, debugColors.yellow)
-    addonTable.PlayerStatusFrame = CreateStandardFrame("PlayerStatusFrame", addonTable.MainFrame, 37, 2, 10, 4, debugColors.gray)
-    addonTable.TargetDebuffFrame = CreateStandardFrame("TargetDebuffFrame", addonTable.MainFrame, 47, 2, 7, 4, debugColors.orange)
-    addonTable.PlayerSpellFrame = CreateStandardFrame("PlayerSpellFrame", addonTable.MainFrame, 2, 6, 24, 4, debugColors.green)
-    addonTable.MiscFrame = CreateStandardFrame("MiscFrame", addonTable.MainFrame, 26, 6, 13, 2, debugColors.orange)
-    addonTable.SpecFrame = CreateStandardFrame("SpecFrame", addonTable.MainFrame, 26, 8, 13, 2, debugColors.lightGreen)
-    addonTable.TargetStatusFrame = CreateStandardFrame("TargetStatusFrame", addonTable.MainFrame, 39, 6, 8, 2, debugColors.blue)
-    addonTable.FocusStatusFrame = CreateStandardFrame("FocusStatusFrame", addonTable.MainFrame, 39, 8, 8, 2, debugColors.yellow)
-    addonTable.FocusDebuffFrame = CreateStandardFrame("FocusDebuffFrame", addonTable.MainFrame, 47, 6, 7, 4, debugColors.lightGreen)
-    addonTable.BeneficialIconSequence = CreateStandardFrame("BeneficialIconSequenceFrame", addonTable.MainFrame, 3, 1, 50, 1, debugColors.blue)
-    addonTable.HarmfulIconSequence = CreateStandardFrame("HarmfulIconSequenceFrame", addonTable.MainFrame, 3, 16, 50, 1, debugColors.blue)
+    addonTable.PlayerBuffFrame = CreateStandardFrame("PlayerBuffFrame", addonTable.MainFrame, 2, 5, 32, 3, debugColors.blue)
+    addonTable.PlayerDebuffFrame = CreateStandardFrame("PlayerDebuffFrame", addonTable.MainFrame, 2, 8, 8, 3, debugColors.yellow)
+    addonTable.TargetDebuffFrame = CreateStandardFrame("TargetDebuffFrame", addonTable.MainFrame, 10, 8, 16, 3, debugColors.orange)
+    addonTable.FocusDebuffFrame = CreateStandardFrame("FocusDebuffFrame", addonTable.MainFrame, 26, 8, 8, 3, debugColors.lightGreen)
+    addonTable.PlayerStatusFrame = CreateStandardFrame("PlayerStatusFrame", addonTable.MainFrame, 38, 2, 8, 4, debugColors.gray)
+    addonTable.TargetStatusFrame = CreateStandardFrame("TargetStatusFrame", addonTable.MainFrame, 38, 6, 8, 2, debugColors.blue)
+    addonTable.FocusStatusFrame = CreateStandardFrame("FocusStatusFrame", addonTable.MainFrame, 38, 8, 8, 2, debugColors.yellow)
+    addonTable.MiscFrame = CreateStandardFrame("MiscFrame", addonTable.MainFrame, 34, 5, 4, 3, debugColors.orange)
+    addonTable.SpecFrame = CreateStandardFrame("SpecFrame", addonTable.MainFrame, 34, 8, 4, 3, debugColors.lightGreen)
+    addonTable.SignalFrame = CreateStandardFrame("SignalFrame", addonTable.MainFrame, 38, 10, 8, 1, debugColors.blue)
+    addonTable.FooterFrane = CreateStandardFrame("FooterFrane", addonTable.MainFrame, 3, 17, 46, 1, debugColors.blue)
 
     -- 创建队伍框架
     local partyDebugColor = CreateColor(127 / 255, 127 / 255, 127 / 255, 1)
     for i = 1, 4 do
         local UnitKey = string.format("%s%d", "party", i)
-        addonTable["PartyFrame" .. UnitKey] = CreateStandardFrame("PartyFrame" .. UnitKey, addonTable.MainFrame, 13 * i - 11, 10, 13, 6, partyDebugColor)
+        addonTable["PartyFrame" .. UnitKey] = CreateStandardFrame("PartyFrame" .. UnitKey, addonTable.MainFrame, 12 * i - 10, 11, 12, 5, partyDebugColor)
     end
 
     -- 创建方块函数
@@ -231,10 +279,10 @@ local function InitializeMainFrame()
     create_square(1, 0, COLOR.NEAR_BLACK_2)
     create_square(0, 1, COLOR.NEAR_BLACK_2)
     create_square(1, 1, COLOR.NEAR_BLACK_1)
-    create_square(54, 16, COLOR.NEAR_BLACK_1)
-    create_square(54, 17, COLOR.NEAR_BLACK_2)
-    create_square(55, 16, COLOR.NEAR_BLACK_2)
-    create_square(55, 17, COLOR.NEAR_BLACK_1)
+    create_square(50, 16, COLOR.NEAR_BLACK_1)
+    create_square(50, 17, COLOR.NEAR_BLACK_2)
+    create_square(51, 16, COLOR.NEAR_BLACK_2)
+    create_square(51, 17, COLOR.NEAR_BLACK_1)
 
     logging("MainFrame created")
 end
@@ -245,12 +293,10 @@ table.insert(FrameInitFuncs, InitializeMainFrame)
 -- 创建像素节点
 local function CreatePixelNode(x, y, title, parent_frame)
     local node_size = addonTable.nodeSize
-    local padSize = addonTable.padSize
-    local innerSize = addonTable.innerSize
     local nodeFrame = CreateFrame("Frame", addonName .. "Pixel" .. title, parent_frame)
     nodeFrame:SetPoint("TOPLEFT", parent_frame, "TOPLEFT", x * node_size, -y * node_size)
     nodeFrame:SetFrameLevel(parent_frame:GetFrameLevel() + 1)
-    nodeFrame:SetSize(innerSize, innerSize)
+    nodeFrame:SetSize(node_size, node_size)
     nodeFrame:Show()
     local nodeTexture = nodeFrame:CreateTexture(nil, "BACKGROUND")
     nodeTexture:SetAllPoints(nodeFrame)
@@ -258,17 +304,112 @@ local function CreatePixelNode(x, y, title, parent_frame)
     nodeTexture:Show()
     return nodeTexture
 end
+-- 一个包含四个小像素的节点。
+local function CreateMixedNode(x, y, title, parent_frame)
+    local node_size = addonTable.nodeSize
+    -- 主节点
+    local main_frame = CreateFrame("Frame", addonName .. "Pixel" .. title, parent_frame)
+    main_frame:SetPoint("TOPLEFT", parent_frame, "TOPLEFT", x * node_size, -y * node_size)
+    main_frame:SetFrameLevel(parent_frame:GetFrameLevel() + 1)
+    main_frame:SetSize(node_size, node_size)
+    main_frame:Show()
+    -- 左上节点
+    local TOPLEFT_Frame = CreateFrame("Frame", addonName .. title .. "PixelTOPLEFT", main_frame)
+    TOPLEFT_Frame:SetPoint("TOPLEFT", main_frame, "TOPLEFT", 0, 0)
+    TOPLEFT_Frame:SetFrameLevel(main_frame:GetFrameLevel() + 1)
+    TOPLEFT_Frame:SetSize(node_size / 2, node_size / 2)
+    TOPLEFT_Frame:Show()
+    local TOPLEFT_Texture = TOPLEFT_Frame:CreateTexture(nil, "BACKGROUND")
+    TOPLEFT_Texture:SetAllPoints(TOPLEFT_Frame)
+    TOPLEFT_Texture:SetColorTexture(0, 0, 0, 1)
+    TOPLEFT_Texture:Show()
+
+    -- 右上节点
+    local TOPRIGHT_Frame = CreateFrame("Frame", addonName .. "PixelTOPRIGHT" .. title, main_frame)
+    TOPRIGHT_Frame:SetPoint("TOPRIGHT", main_frame, "TOPRIGHT", 0, 0)
+    TOPRIGHT_Frame:SetFrameLevel(main_frame:GetFrameLevel() + 1)
+    TOPRIGHT_Frame:SetSize(node_size / 2, node_size / 2)
+    TOPRIGHT_Frame:Show()
+    local TOPRIGHT_Texture = TOPRIGHT_Frame:CreateTexture(nil, "BACKGROUND")
+    TOPRIGHT_Texture:SetAllPoints(TOPRIGHT_Frame)
+    TOPRIGHT_Texture:SetColorTexture(0, 0, 0, 1)
+    TOPRIGHT_Texture:Show()
+
+    -- 左下节点
+    local BOTTOMLEFT_Frame = CreateFrame("Frame", addonName .. "PixelBOTTOMLEFT" .. title, main_frame)
+    BOTTOMLEFT_Frame:SetPoint("BOTTOMLEFT", main_frame, "BOTTOMLEFT", 0, 0)
+    BOTTOMLEFT_Frame:SetFrameLevel(main_frame:GetFrameLevel() + 1)
+    BOTTOMLEFT_Frame:SetSize(node_size / 2, node_size / 2)
+    BOTTOMLEFT_Frame:Show()
+    local BOTTOMLEFT_Texture = BOTTOMLEFT_Frame:CreateTexture(nil, "BACKGROUND")
+    BOTTOMLEFT_Texture:SetAllPoints(BOTTOMLEFT_Frame)
+    BOTTOMLEFT_Texture:SetColorTexture(0, 0, 0, 1)
+    BOTTOMLEFT_Texture:Show()
+
+    -- 右下节点
+    local BOTTOMRIGHT_Frame = CreateFrame("Frame", addonName .. "PixelBOTTOMRIGHT" .. title, main_frame)
+    BOTTOMRIGHT_Frame:SetPoint("BOTTOMRIGHT", main_frame, "BOTTOMRIGHT", 0, 0)
+    BOTTOMRIGHT_Frame:SetFrameLevel(main_frame:GetFrameLevel() + 1)
+    BOTTOMRIGHT_Frame:SetSize(node_size / 2, node_size / 2)
+    BOTTOMRIGHT_Frame:Show()
+    local BOTTOMRIGHT_Texture = BOTTOMRIGHT_Frame:CreateTexture(nil, "BACKGROUND")
+    BOTTOMRIGHT_Texture:SetAllPoints(BOTTOMRIGHT_Frame)
+    BOTTOMRIGHT_Texture:SetColorTexture(0, 0, 0, 1)
+    BOTTOMRIGHT_Texture:Show()
+
+    if DEBUG then
+        TOPLEFT_Texture:SetColorTexture(math.random(), math.random(), math.random(), 1)
+        TOPRIGHT_Texture:SetColorTexture(math.random(), math.random(), math.random(), 1)
+        BOTTOMLEFT_Texture:SetColorTexture(math.random(), math.random(), math.random(), 1)
+        BOTTOMRIGHT_Texture:SetColorTexture(math.random(), math.random(), math.random(), 1)
+    end
+    return TOPLEFT_Texture, TOPRIGHT_Texture, BOTTOMLEFT_Texture, BOTTOMRIGHT_Texture
+end
+
+
+-- 一个包含角标的节点
+local function CreateFootnoteNode(x, y, title, parent_frame)
+    local node_size = addonTable.nodeSize
+    local footnoteSize = addonTable.footnoteSize
+    -- 主节点
+    local main_frame = CreateFrame("Frame", addonName .. "Pixel" .. title, parent_frame)
+    main_frame:SetPoint("TOPLEFT", parent_frame, "TOPLEFT", x * node_size, -y * node_size)
+    main_frame:SetFrameLevel(parent_frame:GetFrameLevel() + 1)
+    main_frame:SetSize(node_size, node_size)
+    main_frame:Show()
+    -- 主节点的图标
+    local main_Texture = main_frame:CreateTexture(nil, "BACKGROUND")
+    main_Texture:SetAllPoints(main_frame)
+    main_Texture:SetColorTexture(0, 0, 0, 1)
+    main_Texture:Show()
+
+    local fn_frame = CreateFrame("Frame", addonName .. "PixelFootnote" .. title, main_frame)
+    fn_frame:SetPoint("BOTTOMRIGHT", main_frame, "BOTTOMRIGHT", 0, 0)
+    fn_frame:SetFrameLevel(main_frame:GetFrameLevel() + 2)
+    fn_frame:SetSize(footnoteSize, footnoteSize)
+    fn_frame:Show()
+    local fn_Texture = fn_frame:CreateTexture(nil, "BACKGROUND")
+    fn_Texture:SetAllPoints(fn_frame)
+    fn_Texture:SetColorTexture(0, 0, 0, 0)
+    fn_Texture:Show()
+
+    if DEBUG then
+        main_Texture:SetColorTexture(math.random(), math.random(), math.random(), 1)
+        fn_Texture:SetColorTexture(math.random(), math.random(), math.random(), 1)
+    end
+    return main_Texture, fn_Texture
+end
+
 
 -- 创建文字节点
 local function CreateStringNode(x, y, title, parent_frame)
     local node_size = addonTable.nodeSize
     local padSize = addonTable.padSize
-    local innerSize = addonTable.innerSize
     local fontSize = addonTable.fontSize
     local nodeFrame = CreateFrame("Frame", addonName .. "String" .. title, parent_frame)
     nodeFrame:SetPoint("TOPLEFT", parent_frame, "TOPLEFT", x * node_size, -y * node_size)
     nodeFrame:SetFrameLevel(parent_frame:GetFrameLevel() + 1)
-    nodeFrame:SetSize(innerSize, innerSize)
+    nodeFrame:SetSize(node_size, node_size)
     nodeFrame:Show()
     local nodeTexture = nodeFrame:CreateTexture(nil, "BACKGROUND")
     nodeTexture:SetAllPoints(nodeFrame)
@@ -289,42 +430,40 @@ local function CreateStringNode(x, y, title, parent_frame)
 end
 
 -- 创建光环序列
-local function CreateAuraSequence(unit, filter, maxCount, name_prefix, parent, sortRule, sortDirection)
+local function CreateAuraSequence(unit, filter, maxCount, name_prefix, parent, sortRule, sortDirection, with_footnote)
+    logging("CreateAuraSequence[" .. unit .. "]")
     sortRule = sortRule or Enum.UnitAuraSortRule.Default
     sortDirection = sortDirection or Enum.UnitAuraSortDirection.Normal
-    local iconTextures = {}
-    local durationTextures = {}
-    local dispelTextures = {}
-    local countTextures = {}
+    with_footnote = with_footnote or false
+
+    local auraTextures = {}
 
     -- 创建光环序列元素
     for i = 1, maxCount do
-        local icon_texture = CreatePixelNode((i - 1), 0, addonName .. name_prefix .. "IconFrame" .. i, parent)
-        table.insert(iconTextures, icon_texture)
+        local iconTexture, fnTexture = CreateFootnoteNode((i - 1), 0, addonName .. name_prefix .. "IconFrame" .. i, parent)
+        local durationTexture, dispelTexture, foreverTexture, _ = CreateMixedNode((i - 1), 1, addonName .. name_prefix .. "DurationFrame" .. i, parent)
 
-        local duration_texture = CreatePixelNode((i - 1), 1, addonName .. name_prefix .. "DurationFrame" .. i, parent)
-        table.insert(durationTextures, duration_texture)
-
-        local dispel_texture = CreatePixelNode((i - 1), 2, addonName .. name_prefix .. "DispelFrame" .. i, parent)
-        table.insert(dispelTextures, dispel_texture)
-
-        local count_string = CreateStringNode((i - 1), 3, addonName .. name_prefix .. "CountFrame" .. i, parent)
-        table.insert(countTextures, count_string)
+        local countString = CreateStringNode((i - 1), 2, addonName .. name_prefix .. "CountFrame" .. i, parent)
+        table.insert(auraTextures, {
+            icon = iconTexture,
+            dispel = dispelTexture,
+            duration = durationTexture,
+            count = countString,
+            fn = fnTexture,
+            forever = foreverTexture
+        })
     end
 
     -- 清除纹理函数
     local function wipeTextures()
-        for _, texture in ipairs(iconTextures) do
-            texture:SetColorTexture(0, 0, 0, 1)
-        end
-        for _, texture in ipairs(durationTextures) do
-            texture:SetColorTexture(0, 0, 0, 1)
-        end
-        for _, texture in ipairs(dispelTextures) do
-            texture:SetColorTexture(0, 0, 0, 1)
-        end
-        for _, texture in ipairs(countTextures) do
-            texture:SetText("")
+        for i = 1, maxCount do
+            local tex = auraTextures[i]
+            tex.icon:SetColorTexture(0, 0, 0, 1)
+            tex.duration:SetColorTexture(0, 0, 0, 1)
+            tex.count:SetText("")
+            tex.dispel:SetColorTexture(0, 0, 0, 1)
+            tex.fn:SetColorTexture(0, 0, 0, 0)
+            tex.forever:SetColorTexture(0, 0, 0, 1)
         end
     end
     -- local iconpack = {}
@@ -334,22 +473,29 @@ local function CreateAuraSequence(unit, filter, maxCount, name_prefix, parent, s
         if not UnitExists(unit) then
             return
         end
-        local auraInstanceIDs = C_UnitAuras.GetUnitAuraInstanceIDs(unit, filter, maxCount, sortRule, sortDirection)
+        local auraInstanceIDs = GetUnitAuraInstanceIDs(unit, filter, maxCount, sortRule, sortDirection)
         for i = 1, #auraInstanceIDs do
             local auraInstanceID = auraInstanceIDs[i]
-            local aura = C_UnitAuras.GetAuraDataByAuraInstanceID(unit, auraInstanceID)
-            local duration = C_UnitAuras.GetAuraDuration(unit, auraInstanceID)
+            local aura = GetAuraDataByAuraInstanceID(unit, auraInstanceID)
+            local duration = GetAuraDuration(unit, auraInstanceID)
             local result = duration:EvaluateRemainingDuration(remaining_curve)
-            local dispelTypeColor = C_UnitAuras.GetAuraDispelTypeColor(unit, auraInstanceID, debuff_curve)
-            local count = C_UnitAuras.GetAuraApplicationDisplayCount(unit, auraInstanceID, 1, 9)
+            local count = GetAuraApplicationDisplayCount(unit, auraInstanceID, 1, 9)
+            local dispelTypeColor = GetAuraDispelTypeColor(unit, auraInstanceID, debuff_curve)
+            local foreverBoolen = DoesAuraHaveExpirationTime(unit, auraInstanceID)
+            local foreverColor = EvaluateColorFromBoolean(foreverBoolen, COLOR.BLACK, COLOR.WHITE) -- 白色是永久buff
 
-            iconTextures[i]:SetTexture(aura.icon, "CLAMPTOBLACK", "CLAMPTOBLACK")
-            durationTextures[i]:SetColorTexture(result:GetRGBA())
-            dispelTextures[i]:SetColorTexture(dispelTypeColor:GetRGBA())
-            countTextures[i]:SetText(count)
+            auraTextures[i].icon:SetTexture(aura.icon, "CLAMPTOBLACK", "CLAMPTOBLACK")
+            auraTextures[i].duration:SetColorTexture(result:GetRGBA())
+            auraTextures[i].count:SetText(count)
+            auraTextures[i].dispel:SetColorTexture(dispelTypeColor:GetRGBA())
+            auraTextures[i].forever:SetColorTexture(foreverColor:GetRGBA())
+            if with_footnote then
+                auraTextures[i].fn:SetColorTexture(dispelTypeColor:GetRGBA())
+            end
         end
     end
     table.insert(UpdateFuncs, updateTexture)
+    logging("CreateAuraSequence[" .. unit .. "]...Done")
 end
 
 -- 创建白色条
@@ -376,69 +522,16 @@ local function CreateWhiteBar(name, parent, x, y, width, height)
     return bar
 end
 
--- 初始化配置框架
-local function InitializeConfigFrame()
-    local si_node1 = CreatePixelNode(1, 3, addonName .. "si_node1", addonTable.MainFrame)
-    local si_node2 = CreatePixelNode(1, 4, addonName .. "si_node2", addonTable.MainFrame)
-    local si_node3 = CreatePixelNode(1, 5, addonName .. "si_node3", addonTable.MainFrame)
-    SLASH_SI1 = "/si"
-    SlashCmdList["SI"] = function(msg)
-        local icon = nil
-        local spell_id = nil
-        if tonumber(msg) then
-            msg = tonumber(msg)
-        end
-
-        local spellInfo = C_Spell.GetSpellInfo(msg)
-        if spellInfo then
-            icon = spellInfo.iconID
-            spell_id = spellInfo.spellID
-        end
-
-        if not icon then
-            local iconID, originalIconID = C_Spell.GetSpellTexture(msg)
-            icon = iconID
-        end
-
-        si_node1:SetTexture(icon)
-        si_node2:SetTexture(icon)
-        si_node3:SetTexture(icon)
-        if spell_id then
-            local spellLink = C_Spell.GetSpellLink(spell_id)
-            logging(spellLink)
-        end
-        C_Timer.After(10, function()
-            logging("SI reset")
-            si_node1:SetColorTexture(0, 0, 0, 1)
-            si_node2:SetColorTexture(0, 0, 0, 1)
-            si_node3:SetColorTexture(0, 0, 0, 1)
-        end)
-    end
-    CreateStringNode(54, 2, addonName .. "num_0", addonTable.MainFrame):SetText("0")
-    CreateStringNode(54, 3, addonName .. "num_1", addonTable.MainFrame):SetText("1")
-    CreateStringNode(54, 4, addonName .. "num_2", addonTable.MainFrame):SetText("2")
-    CreateStringNode(54, 5, addonName .. "num_3", addonTable.MainFrame):SetText("3")
-    CreateStringNode(54, 6, addonName .. "num_4", addonTable.MainFrame):SetText("4")
-    CreateStringNode(54, 7, addonName .. "num_5", addonTable.MainFrame):SetText("5")
-    CreateStringNode(54, 8, addonName .. "num_6", addonTable.MainFrame):SetText("6")
-    CreateStringNode(54, 9, addonName .. "num_7", addonTable.MainFrame):SetText("7")
-    CreateStringNode(54, 10, addonName .. "num_8", addonTable.MainFrame):SetText("8")
-    CreateStringNode(54, 11, addonName .. "num_9", addonTable.MainFrame):SetText("9")
-    CreateStringNode(54, 12, addonName .. "num_star", addonTable.MainFrame):SetText("*")
-end
-
--- 将初始化配置框架函数添加到初始化函数表
-table.insert(FrameInitFuncs, InitializeConfigFrame)
 
 -- 初始化光环框架
 local function InitializeAuraFrame()
     logging("InitializeAuraFrame")
-    CreateAuraSequence("player", "HELPFUL", 28, "PlayerBuff", addonTable.PlayerBuffFrame, Enum.UnitAuraSortRule.Expiration, Enum.UnitAuraSortDirection.Normal)
-    CreateAuraSequence("player", "HARMFUL", 7, "PlayerDebuff", addonTable.PlayerDebuffFrame, Enum.UnitAuraSortRule.Expiration, Enum.UnitAuraSortDirection.Normal)
-    CreateAuraSequence("target", "HARMFUL|PLAYER", 7, "TargetDebuff", addonTable.TargetDebuffFrame, Enum.UnitAuraSortRule.Expiration, Enum.UnitAuraSortDirection.Normal)
-    CreateAuraSequence("focus", "HARMFUL|PLAYER", 7, "FocusDebuff", addonTable.FocusDebuffFrame, Enum.UnitAuraSortRule.Expiration, Enum.UnitAuraSortDirection.Normal)
+    CreateAuraSequence("player", "HELPFUL", 32, "PlayerBuff", addonTable.PlayerBuffFrame, Enum.UnitAuraSortRule.Expiration, Enum.UnitAuraSortDirection.Normal)
+    CreateAuraSequence("player", "HARMFUL", 8, "PlayerDebuff", addonTable.PlayerDebuffFrame, Enum.UnitAuraSortRule.Expiration, Enum.UnitAuraSortDirection.Normal, true)
+    CreateAuraSequence("target", "HARMFUL|PLAYER", 16, "TargetDebuff", addonTable.TargetDebuffFrame, Enum.UnitAuraSortRule.Expiration, Enum.UnitAuraSortDirection.Normal)
+    CreateAuraSequence("focus", "HARMFUL|PLAYER", 8, "FocusDebuff", addonTable.FocusDebuffFrame, Enum.UnitAuraSortRule.Expiration, Enum.UnitAuraSortDirection.Normal)
 
-    logging("AuraFrame created")
+    logging("InitializeAuraFrame...Done")
 end
 
 -- 将初始化光环框架函数添加到初始化函数表
@@ -446,8 +539,9 @@ table.insert(FrameInitFuncs, InitializeAuraFrame)
 
 -- 初始化玩家状态框架
 local function InitializePlayerStatusFrame()
+    logging("InitializePlayerStatusFrame")
     local x = 0
-    local y = 0
+    local y = 2
     local player_in_combat = CreatePixelNode(x, y, "PlayerInCombat", addonTable.PlayerStatusFrame)
     x = 1
     local player_is_moving = CreatePixelNode(x, y, "PlayerIsMoving", addonTable.PlayerStatusFrame)
@@ -459,28 +553,28 @@ local function InitializePlayerStatusFrame()
     local player_cast_icon = CreatePixelNode(x, y, "PlayerCastIcon", addonTable.PlayerStatusFrame)
     x = 5
     local player_cast_duration = CreatePixelNode(x, y, "PlayerCastDuration", addonTable.PlayerStatusFrame)
-    x = 6
-    local player_channel_icon = CreatePixelNode(x, y, "PlayerChannelIcon", addonTable.PlayerStatusFrame)
-    x = 7
-    local player_channel_duration = CreatePixelNode(x, y, "PlayerChannelDuration", addonTable.PlayerStatusFrame)
-
-    y = 1
+    y = 3
     x = 0
     local player_class = CreatePixelNode(x, y, "PlayerClass", addonTable.PlayerStatusFrame)
     x = 1
     local player_role = CreatePixelNode(x, y, "PlayerRole", addonTable.PlayerStatusFrame)
     x = 2
     local player_deaded = CreatePixelNode(x, y, "PlayerDeaded", addonTable.PlayerStatusFrame)
+    x = 4
+    local player_channel_icon = CreatePixelNode(x, y, "PlayerChannelIcon", addonTable.PlayerStatusFrame)
+    x = 5
+    local player_channel_duration = CreatePixelNode(x, y, "PlayerChannelDuration", addonTable.PlayerStatusFrame)
 
-    y = 0
-    x = 9
+
+    y = 2
+    x = 7
     local player_health = CreatePixelNode(x, y, "PlayerHealth", addonTable.PlayerStatusFrame)
-    y = 1
+    y = 3
     local player_power = CreatePixelNode(x, y, "PlayerPower", addonTable.PlayerStatusFrame)
     local powerType, _, _, _, _ = UnitPowerType("player")
 
-    local PlayerDamageAbsorbsBar = CreateWhiteBar("PlayerDamageAbsorbsBar", addonTable.PlayerStatusFrame, 0, 2, 10, 1)
-    local PlayerHealAbsorbsBar = CreateWhiteBar("PlayerHealAbsorbsBar", addonTable.PlayerStatusFrame, 0, 3, 10, 1)
+    local PlayerDamageAbsorbsBar = CreateWhiteBar("PlayerDamageAbsorbsBar", addonTable.PlayerStatusFrame, 0, 0, 8, 1)
+    local PlayerHealAbsorbsBar = CreateWhiteBar("PlayerHealAbsorbsBar", addonTable.PlayerStatusFrame, 0, 1, 8, 1)
 
     -- 更新玩家状态函数
     local function UpdateStatus()
@@ -532,9 +626,7 @@ local function InitializePlayerStatusFrame()
         end
 
         local _, classFilename, _ = UnitClass("player")
-        -- local p = COLOR.CLASS[classFilename]
-        -- local r, g, b, a = p:GetRGBA()
-        -- logging("r" .. r * 255 .. ",g" .. g * 255 .. ",b" .. b * 255 .. ",a" .. a)
+
         player_class:SetColorTexture(COLOR.CLASS[classFilename]:GetRGBA())
         -- 检查角色
         local role = UnitGroupRolesAssigned("player")
@@ -558,6 +650,7 @@ local function InitializePlayerStatusFrame()
         player_power:SetColorTexture(UnitPowerPercent("player", powerType, true, curve):GetRGBA())
     end
     table.insert(UpdateFuncs, UpdateStatus)
+    logging("InitializePlayerStatusFrame...Done")
 end
 
 -- 将初始化玩家状态框架函数添加到初始化函数表
@@ -566,60 +659,108 @@ table.insert(FrameInitFuncs, InitializePlayerStatusFrame)
 -- 初始化技能框架
 local function InitializeSpellFrame()
     logging("InitializeSpellFrame")
-    local MaxFrame = math.min(24, #addonTable.Spell)
-    local iconTextrues = {}
-    local cooldownTextrues = {}
-    local highlightTextrues = {}
-    local chargeStrings = {}
+    table.insert(addonTable.Spell, { spellID = 61304, type = "cooldown" })
+
+    local cooldownInfos = {}
+
+    local cooldownIDs = GetCooldownViewerCategorySet(Enum.CooldownViewerCategory.Essential, true)
+    for _, v in ipairs(GetCooldownViewerCategorySet(Enum.CooldownViewerCategory.Utility, true)) do
+        table.insert(cooldownIDs, v)
+    end
+    for i = 1, #cooldownIDs do
+        local cooldownID = cooldownIDs[i]
+        local cooldownInfo = GetCooldownViewerCooldownInfo(cooldownID)
+        table.insert(cooldownInfos, cooldownInfo)
+    end
+
+    table.sort(cooldownInfos, function(a, b)
+        -- true 排在 false 前面
+        if a.isKnown ~= b.isKnown then
+            return a.isKnown -- 当a为true且b为false时返回true
+        end
+        -- 如果isKnown相同，可以按其他字段排序，这里保持任意顺序
+        return false
+    end)
+
+    for i = 1, #cooldownInfos do
+        local cooldownInfo = cooldownInfos[i]
+        if cooldownInfo.charges then
+            table.insert(addonTable.Spell, { spellID = cooldownInfo.spellID, type = "charge" })
+        else
+            table.insert(addonTable.Spell, { spellID = cooldownInfo.spellID, type = "cooldown" })
+        end
+    end
+
+
+    local MaxFrame = math.min(36, #addonTable.Spell)
+    local spellTextrues = {}
+
+    for i = 1, #addonTable.Spell do
+        local SpellID = addonTable.Spell[i].spellID
+        local spellLink = GetSpellLink(SpellID)
+        logging("技能冷却[" .. i .. "]" .. spellLink .. ",类型:" .. addonTable.Spell[i].type)
+    end
+
 
     -- 创建技能框架元素
-    for i = 1, 24 do
+    for i = 1, 36 do
         local iconTexture = CreatePixelNode(i - 1, 0, "SpellIconFrame" .. i, addonTable.PlayerSpellFrame)
-        table.insert(iconTextrues, iconTexture)
 
-        local cooldownTexture = CreatePixelNode(i - 1, 1, "SpellCooldownFrame" .. i, addonTable.PlayerSpellFrame)
-        table.insert(cooldownTextrues, cooldownTexture)
+        local cooldownTexture, usableTexture, highlightTexture, knownTexture = CreateMixedNode(i - 1, 1, "SpellMiscFrame" .. i, addonTable.PlayerSpellFrame)
 
-        local highlightTexture = CreatePixelNode(i - 1, 2, "SpellHighlightFrame" .. i, addonTable.PlayerSpellFrame)
-        table.insert(highlightTextrues, highlightTexture)
+        local charge_string = CreateStringNode(i - 1, 2, "SpellChargeFrame" .. i, addonTable.PlayerSpellFrame)
 
-        local charge_string = CreateStringNode(i - 1, 3, "SpellChargeFrame" .. i, addonTable.PlayerSpellFrame)
-        table.insert(chargeStrings, charge_string)
+        table.insert(spellTextrues, {
+            icon = iconTexture,
+            cooldown = cooldownTexture,
+            usable = usableTexture,
+            highlight = highlightTexture,
+            charge = charge_string,
+            known = knownTexture
+        })
     end
 
-    -- 设置技能图标
-    for i = 1, MaxFrame do
-        local SpellID = addonTable.Spell[i].spellID
-        local iconID, _ = C_Spell.GetSpellTexture(SpellID)
-        iconTextrues[i]:SetTexture(iconID)
-        local spellLink = C_Spell.GetSpellLink(SpellID)
-        logging("技能冷却[" .. i .. "]: 类型 " .. addonTable.Spell[i].type .. " 技能" .. spellLink)
-    end
 
     -- 更新节点纹理函数
     local function UpdateNodeTexture()
         for i = 1, MaxFrame do
             local SpellID = addonTable.Spell[i].spellID
+            local spellTex = spellTextrues[i]
 
+            local iconID, originalIconID = GetSpellTexture(SpellID)
+            spellTex.icon:SetTexture(iconID)
+
+
+            -- spellTex.cooldown:SetColorTexture(cd_remaining:GetRGBA())
             if addonTable.Spell[i].type == "charge" then
-                local duration = C_Spell.GetSpellChargeDuration(SpellID)
+                local duration = GetSpellChargeDuration(SpellID)
                 local result = duration:EvaluateRemainingDuration(remaining_curve)
-                cooldownTextrues[i]:SetColorTexture(result:GetRGBA())
+                spellTex.cooldown:SetColorTexture(result:GetRGBA())
 
-                local chargeInfo = C_Spell.GetSpellCharges(SpellID)
-                chargeStrings[i]:SetText(tostring(chargeInfo.currentCharges))
+                local chargeInfo = GetSpellCharges(SpellID)
+                spellTex.charge:SetText(tostring(chargeInfo.currentCharges))
             else
-                local duration = C_Spell.GetSpellCooldownDuration(SpellID)
+                local duration = GetSpellCooldownDuration(SpellID)
                 local result = duration:EvaluateRemainingDuration(remaining_curve)
-                cooldownTextrues[i]:SetColorTexture(result:GetRGBA())
+                spellTex.cooldown:SetColorTexture(result:GetRGBA())
             end
 
-            local isSpellOverlayed = C_SpellActivationOverlay.IsSpellOverlayed(SpellID)
-            highlightTextrues[i]:SetColorTexture(C_CurveUtil.EvaluateColorFromBoolean(isSpellOverlayed, COLOR.WHITE, COLOR.BLACK):GetRGBA())
+            local isSpellOverlayed = IsSpellOverlayed(SpellID)
+            -- print(isSpellOverlayed)
+            local highlightValue = EvaluateColorFromBoolean(isSpellOverlayed, COLOR.WHITE, COLOR.BLACK) -- 高亮是
+            spellTex.highlight:SetColorTexture(highlightValue:GetRGBA())
+
+            local isUsable, insufficientPower = IsSpellUsable(SpellID)
+            local usableValue = EvaluateColorFromBoolean(isUsable, COLOR.WHITE, COLOR.BLACK) -- 无法使用时是黑色，可用是白色。
+            spellTex.usable:SetColorTexture(usableValue:GetRGBA())
+
+            local isKnown = IsSpellInSpellBook(SpellID)
+            local knownValue = EvaluateColorFromBoolean(isKnown, COLOR.WHITE, COLOR.BLACK) -- 不知道时是黑色，会这个技能是白色
+            spellTex.known:SetColorTexture(knownValue:GetRGBA())
         end
     end
     table.insert(UpdateFuncs, UpdateNodeTexture)
-    logging("PlayerSpellFrame created")
+    logging("InitializeSpellFrame...Done")
 end
 
 -- 将初始化技能框架函数添加到初始化函数表
@@ -634,34 +775,36 @@ local function InitializePartyFrame()
         local parent_frame = addonTable["PartyFrame" .. UnitKey]
         local frame_pre = addonName .. "PartyFrame" .. UnitKey
 
-        -- 创建队伍Buff框架
-        local buff_frame = CreateFrame("Frame", frame_pre .. "BuffFrame", parent_frame)
-        buff_frame:SetFrameLevel(parent_frame:GetFrameLevel() + 1)
-        buff_frame:SetPoint("TOPLEFT", parent_frame, "TOPLEFT", 0, 0)
-        buff_frame:SetSize(node_size * 7, node_size * 4)
-        buff_frame:Show()
-        CreateAuraSequence(UnitKey, "HELPFUL|PLAYER", 7, UnitKey .. "Buff", buff_frame, Enum.UnitAuraSortRule.Expiration, Enum.UnitAuraSortDirection.Normal)
-
         -- 创建队伍Debuff框架
         local debuff_frame = CreateFrame("Frame", frame_pre .. "DebuffFrame", parent_frame)
         debuff_frame:SetFrameLevel(parent_frame:GetFrameLevel() + 1)
-        debuff_frame:SetPoint("TOPLEFT", parent_frame, "TOPLEFT", 7 * node_size, 0)
-        debuff_frame:SetSize(node_size * 6, node_size * 4)
+        debuff_frame:SetPoint("TOPLEFT", parent_frame, "TOPLEFT", 0, 0)
+        debuff_frame:SetSize(node_size * 6, node_size * 3)
         debuff_frame:Show()
-        CreateAuraSequence(UnitKey, "HARMFUL", 6, UnitKey .. "Debuff", debuff_frame, Enum.UnitAuraSortRule.Expiration, Enum.UnitAuraSortDirection.Normal)
+        CreateAuraSequence(UnitKey, "HARMFUL", 6, UnitKey .. "Debuff", debuff_frame, Enum.UnitAuraSortRule.Default, Enum.UnitAuraSortDirection.Normal, true)
+
+
+        -- 创建队伍Buff框架
+        local buff_frame = CreateFrame("Frame", frame_pre .. "BuffFrame", parent_frame)
+        buff_frame:SetFrameLevel(parent_frame:GetFrameLevel() + 1)
+        buff_frame:SetPoint("TOPLEFT", parent_frame, "TOPLEFT", 6 * node_size, 0)
+        buff_frame:SetSize(node_size * 6, node_size * 3)
+        buff_frame:Show()
+        CreateAuraSequence(UnitKey, "HELPFUL|PLAYER", 7, UnitKey .. "Buff", buff_frame, Enum.UnitAuraSortRule.Default, Enum.UnitAuraSortDirection.Normal)
+
 
         -- 创建队伍条框架
         local bar_frame = CreateFrame("Frame", frame_pre .. "BarFrame", parent_frame)
         bar_frame:SetFrameLevel(parent_frame:GetFrameLevel() + 1)
-        bar_frame:SetPoint("TOPLEFT", parent_frame, "TOPLEFT", 0, -4 * node_size)
-        bar_frame:SetSize(node_size * 10, node_size * 3)
+        bar_frame:SetPoint("TOPLEFT", parent_frame, "TOPLEFT", 0, -3 * node_size)
+        bar_frame:SetSize(node_size * 8, node_size * 2)
         bar_frame:Show()
 
         -- 创建队伍状态框架
         local status_frame = CreateFrame("Frame", frame_pre .. "StatusFrame", parent_frame)
         status_frame:SetFrameLevel(parent_frame:GetFrameLevel() + 1)
-        status_frame:SetPoint("TOPLEFT", parent_frame, "TOPLEFT", 10 * node_size, -4 * node_size)
-        status_frame:SetSize(node_size * 3, node_size * 2)
+        status_frame:SetPoint("TOPLEFT", parent_frame, "TOPLEFT", 8 * node_size, -3 * node_size)
+        status_frame:SetSize(node_size * 4, node_size * 2)
         status_frame:Show()
 
         -- 创建队伍状态节点
@@ -673,8 +816,8 @@ local function InitializePartyFrame()
         local unit_select = CreatePixelNode(2, 1, addonName .. "PartySelect" .. i, status_frame)
 
         -- 创建队伍吸收条
-        local DamageAbsorbsBar = CreateWhiteBar(UnitKey .. "DamageAbsorbsBar", bar_frame, 0, 0, 10, 1)
-        local HealAbsorbsBar = CreateWhiteBar(UnitKey .. "HealAbsorbsBar", bar_frame, 0, 1, 10, 1)
+        local DamageAbsorbsBar = CreateWhiteBar(UnitKey .. "DamageAbsorbsBar", bar_frame, 0, 0, 8, 1)
+        local HealAbsorbsBar = CreateWhiteBar(UnitKey .. "HealAbsorbsBar", bar_frame, 0, 1, 8, 1)
 
         -- 更新队伍框架函数
         function UpdateUnitrame()
@@ -728,7 +871,7 @@ local function InitializePartyFrame()
 
         table.insert(UpdateFuncs, UpdateUnitrame)
     end
-    logging("PartyFrame created")
+    logging("InitializePartyFrame...Done")
 end
 
 -- 将初始化队伍框架函数添加到初始化函数表
@@ -736,6 +879,7 @@ table.insert(FrameInitFuncs, InitializePartyFrame)
 
 -- 初始化单位状态框架
 local function InitializeUnitStatusFrame(unit, parent)
+    logging("InitializeUnitStatusFrame[" .. unit .. "]")
     local x = 0
     local y = 0
     local unit_exist = CreatePixelNode(x, y, unit .. "TargetExist", parent)
@@ -804,7 +948,7 @@ local function InitializeUnitStatusFrame(unit, parent)
             local _, _, CastTextureID, _, _, _, _, CastNotInterruptible, _, _ = UnitCastingInfo(unit)
             if CastTextureID then
                 unit_cast_icon:SetTexture(CastTextureID)
-                unit_cast_interruptible:SetColorTexture(C_CurveUtil.EvaluateColorFromBoolean(CastNotInterruptible, COLOR.BLACK, COLOR.WHITE):GetRGBA())
+                unit_cast_interruptible:SetColorTexture(EvaluateColorFromBoolean(CastNotInterruptible, COLOR.BLACK, COLOR.WHITE):GetRGBA())
                 local duration = UnitCastingDuration(unit)
                 local result = duration:EvaluateElapsedPercent(curve)
                 unit_cast_duration:SetColorTexture(result:GetRGBA())
@@ -816,7 +960,7 @@ local function InitializeUnitStatusFrame(unit, parent)
             local _, _, textureID, _, _, _, ChannelNotInterruptible = UnitChannelInfo(unit)
             if textureID then
                 unit_channel_icon:SetTexture(textureID)
-                unit_channel_interruptible:SetColorTexture(C_CurveUtil.EvaluateColorFromBoolean(ChannelNotInterruptible, COLOR.BLACK, COLOR.WHITE):GetRGBA())
+                unit_channel_interruptible:SetColorTexture(EvaluateColorFromBoolean(ChannelNotInterruptible, COLOR.BLACK, COLOR.WHITE):GetRGBA())
                 local duration = UnitChannelDuration(unit)
                 local result = duration:EvaluateElapsedPercent(curve)
                 unit_channel_duration:SetColorTexture(result:GetRGBA())
@@ -845,6 +989,7 @@ local function InitializeUnitStatusFrame(unit, parent)
     end
 
     table.insert(UpdateFuncs, UpdateStatus)
+    logging("InitializeUnitStatusFrame[" .. unit .. "]...Done")
 end
 
 -- 初始化目标和焦点状态框架
@@ -865,16 +1010,16 @@ local function InitializeMiscFrame()
 
     -- 更新杂项状态函数
     local function UpdateStatus()
-        local spellID = C_AssistedCombat.GetNextCastSpell(false)
+        local spellID = GetNextCastSpell(false)
         if spellID then
-            local iconID, originalIconID = C_Spell.GetSpellTexture(spellID)
+            local iconID, originalIconID = GetSpellTexture(spellID)
             assisted_combat:SetTexture(originalIconID)
         else
             assisted_combat:SetColorTexture(0, 0, 0, 1)
         end
     end
     table.insert(UpdateFuncs, UpdateStatus)
-    logging("MiscFrame created")
+    logging("InitializeMiscFrame...Done")
 end
 
 -- 将初始化杂项框架函数添加到初始化函数表
@@ -882,34 +1027,57 @@ table.insert(FrameInitFuncs, InitializeMiscFrame)
 
 
 
-local function InitHarmfulIconSequenceFrame()
-    CreatePixelNode(1, 0, "HarmfulIcon1", addonTable.HarmfulIconSequence):SetTexture(C_Spell.GetSpellTexture(1253519))
-    CreatePixelNode(2, 0, "HarmfulIcon1", addonTable.HarmfulIconSequence):SetTexture(C_Spell.GetSpellTexture(1254686))
-    CreatePixelNode(3, 0, "HarmfulIcon1", addonTable.HarmfulIconSequence):SetTexture(C_Spell.GetSpellTexture(1252877))
-    CreatePixelNode(4, 0, "HarmfulIcon1", addonTable.HarmfulIconSequence):SetTexture(C_Spell.GetSpellTexture(1258220))
-    CreatePixelNode(5, 0, "HarmfulIcon1", addonTable.HarmfulIconSequence):SetTexture(C_Spell.GetSpellTexture(153757))
-    CreatePixelNode(6, 0, "HarmfulIcon1", addonTable.HarmfulIconSequence):SetTexture(C_Spell.GetSpellTexture(1254672))
-    CreatePixelNode(7, 0, "HarmfulIcon1", addonTable.HarmfulIconSequence):SetTexture(C_Spell.GetSpellTexture(154396))
-    CreatePixelNode(8, 0, "HarmfulIcon1", addonTable.HarmfulIconSequence):SetTexture(C_Spell.GetSpellTexture(386173))
-    CreatePixelNode(9, 0, "HarmfulIcon1", addonTable.HarmfulIconSequence):SetTexture(C_Spell.GetSpellTexture(388863))
-    CreatePixelNode(10, 0, "HarmfulIcon1", addonTable.HarmfulIconSequence):SetTexture(C_Spell.GetSpellTexture(377344))
-    CreatePixelNode(11, 0, "HarmfulIcon1", addonTable.HarmfulIconSequence):SetTexture(C_Spell.GetSpellTexture(390944))
-    CreatePixelNode(12, 0, "HarmfulIcon1", addonTable.HarmfulIconSequence):SetTexture(C_Spell.GetSpellTexture(1258826))
-    CreatePixelNode(13, 0, "HarmfulIcon1", addonTable.HarmfulIconSequence):SetTexture(C_Spell.GetSpellTexture(1258798))
-    CreatePixelNode(14, 0, "HarmfulIcon1", addonTable.HarmfulIconSequence):SetTexture(C_Spell.GetSpellTexture(1258437))
-    CreatePixelNode(15, 0, "HarmfulIcon1", addonTable.HarmfulIconSequence):SetTexture(C_Spell.GetSpellTexture(1278967))
-    CreatePixelNode(16, 0, "HarmfulIcon1", addonTable.HarmfulIconSequence):SetTexture(C_Spell.GetSpellTexture(1258445))
-    CreatePixelNode(17, 0, "HarmfulIcon1", addonTable.HarmfulIconSequence):SetTexture(C_Spell.GetSpellTexture(1264453))
-    CreatePixelNode(18, 0, "HarmfulIcon1", addonTable.HarmfulIconSequence):SetTexture(C_Spell.GetSpellTexture(1264186))
-    CreatePixelNode(19, 0, "HarmfulIcon1", addonTable.HarmfulIconSequence):SetTexture(C_Spell.GetSpellTexture(1263716))
-    CreatePixelNode(20, 0, "HarmfulIcon1", addonTable.HarmfulIconSequence):SetTexture(C_Spell.GetSpellTexture(1263756))
-    CreatePixelNode(21, 0, "HarmfulIcon1", addonTable.HarmfulIconSequence):SetTexture(C_Spell.GetSpellTexture(465904))
-    CreatePixelNode(22, 0, "HarmfulIcon1", addonTable.HarmfulIconSequence):SetTexture(C_Spell.GetSpellTexture(467621))
+local function InitializeFooterFrane()
+    -- FooterFrane 一个无功能性的纯美化组件。
+    logging("InitializeFooterFrane")
+    local cooldownIDs = GetCooldownViewerCategorySet(Enum.CooldownViewerCategory.TrackedBuff, true)
+    for _, v in ipairs(GetCooldownViewerCategorySet(Enum.CooldownViewerCategory.TrackedBar, true)) do
+        table.insert(cooldownIDs, v)
+    end
+    for i = 1, math.min(46, #cooldownIDs) do
+        local cooldownID = cooldownIDs[i]
+        local cooldownInfo = GetCooldownViewerCooldownInfo(cooldownID)
+        local iconID, originalIconID = GetSpellTexture(cooldownInfo.spellID)
+        CreatePixelNode(i - 1, 0, "FooterFrane" .. i, addonTable.FooterFrane):SetTexture(iconID)
+    end
+    logging("InitializeFooterFrane...Done")
 end
-table.insert(FrameInitFuncs, InitHarmfulIconSequenceFrame)
+table.insert(FrameInitFuncs, InitializeFooterFrane)
 
 
+-- 初始化配置框架
+local function InitializeSignalFrame()
+    logging("InitializeSignalFrame")
+    local nodes = {}
 
+    for i = 1, 8 do
+        nodes[i] = CreatePixelNode(i - 1, 0, addonName .. "SignalFrame" .. tostring(i), addonTable.SignalFrame)
+        local color = i * 32 - 1
+        nodes[i]:SetColorTexture(color / 255, color / 255, color / 255, 1)
+    end
+    logging("使用 /pd [1-8] [0-255] [0-255] [0-255] 修改信号色块")
+
+    SLASH_PD1 = "/pd"
+    SlashCmdList["PD"] = function(msg)
+        local arg1, arg2, arg3, arg4 = strsplit(" ", msg, 4)
+        nodes[tonumber(arg1)]:SetColorTexture(tonumber(arg2) / 255, tonumber(arg3) / 255, tonumber(arg4 / 255), 1)
+    end
+    CreateStringNode(51, 3, addonName .. "num_0", addonTable.MainFrame):SetText("0")
+    CreateStringNode(51, 4, addonName .. "num_1", addonTable.MainFrame):SetText("1")
+    CreateStringNode(51, 5, addonName .. "num_2", addonTable.MainFrame):SetText("2")
+    CreateStringNode(51, 6, addonName .. "num_3", addonTable.MainFrame):SetText("3")
+    CreateStringNode(51, 7, addonName .. "num_4", addonTable.MainFrame):SetText("4")
+    CreateStringNode(51, 8, addonName .. "num_5", addonTable.MainFrame):SetText("5")
+    CreateStringNode(51, 9, addonName .. "num_6", addonTable.MainFrame):SetText("6")
+    CreateStringNode(51, 10, addonName .. "num_7", addonTable.MainFrame):SetText("7")
+    CreateStringNode(51, 11, addonName .. "num_8", addonTable.MainFrame):SetText("8")
+    CreateStringNode(51, 12, addonName .. "num_9", addonTable.MainFrame):SetText("9")
+    CreateStringNode(51, 13, addonName .. "num_star", addonTable.MainFrame):SetText("*")
+    logging("InitializeSignalFrame...Done")
+end
+
+-- 将初始化配置框架函数添加到初始化函数表
+table.insert(FrameInitFuncs, InitializeSignalFrame)
 
 
 

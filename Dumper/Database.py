@@ -76,7 +76,7 @@ class NodeTitleManager:
     4. 管理未匹配节点（内存中）
     """
 
-    def __init__(self, db_path: str | None = None, similarity_threshold: float = 0.95) -> None:
+    def __init__(self, db_path: str | None = None, similarity_threshold: float = 0.97) -> None:
         """初始化管理器。
 
         Args:
@@ -412,12 +412,13 @@ class NodeTitleManager:
         finally:
             conn.close()
 
-    def update_title(self, record_id: int, new_title: str) -> bool:
+    def update_title(self, record_id: int, new_title: str, match_type: str | None = None) -> bool:
         """更新标题名称。
 
         Args:
             record_id: 记录ID
             new_title: 新标题
+            match_type: 匹配类型（可选，'manual' 或 'cosine'）
 
         Returns:
             bool: 是否成功
@@ -426,7 +427,13 @@ class NodeTitleManager:
         cursor: sqlite3.Cursor = conn.cursor()
 
         try:
-            cursor.execute('UPDATE node_titles SET title = ? WHERE id = ?', (new_title, record_id))
+            if match_type:
+                cursor.execute(
+                    'UPDATE node_titles SET title = ?, match_type = ? WHERE id = ?',
+                    (new_title, match_type, record_id)
+                )
+            else:
+                cursor.execute('UPDATE node_titles SET title = ? WHERE id = ?', (new_title, record_id))
             conn.commit()
 
             if cursor.rowcount > 0:
