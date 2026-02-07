@@ -32,30 +32,6 @@
 5. **禁止商用与损害公平**：不得将本项目用于任何商业用途，或开发损害游戏公平性的外挂/自动化工具。  
 
 
-
----
-
-# English Appendix
-
-## Origin and Purpose
-
-This project was born from a simple idea: **In patch 12.0, pass Secret Values to external programs through pixelization**.
-
-Previously, WoW's addon API provided abundant game data, but in the latest game updates, this data has been restricted to "Secret Values" and cannot be used. However, Secret Values can be encoded as colored pixel blocks in screen corners, allowing external programs to capture structured information through screen capture.
-
-**This is not an out‑of‑the‑box product, but a technical demonstration.** The code is fully open‑source, aiming to showcase the feasibility of the "pixel bridge" concept. If you resonate with this direction, we recommend performing **personalized modifications** on top of it—adjust pixel layouts, modify data structures, change communication methods—to make it your own unique implementation.
-
-**How to start?** We recommend using the **vibe coding** approach: leverage AI programming tools (like Cline, Cursor, Copilot, Antigravity, etc.) to help you understand the code logic and perform lightweight refactoring of this project. Even if you're not a professional developer, you can describe your needs in natural language and quickly generate code variants that suit your habits, thereby removing the identifiable features of this project.
-
-The project adopts a **Dumper + HTTP API** architecture: Dumper handles pixel capture and parsing, outputting data in JSON format through a local HTTP service (default port 65131). This decoupled design allows you to independently develop subsequent Rotation logic in any language you prefer (Python, C#, Lua, etc.).
-
----
-
-A **game‑data pixelization addon** for *World of Warcraft* that converts collectible information in‑game into pixel dots at screen corners, allowing external programs to easily read and parse them into structured data.
-
-> ⚠️ **Important Notice**: This project is solely a technical demonstration and conceptual reference; **do not use it directly in a live game environment**, or it may result in account suspension. The project aims to spark ideas, showcasing a data‑extraction approach—users assume all risks.
-
-
 ---
 
 ## ⚠️ Disclaimer⚠️
