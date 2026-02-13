@@ -35,7 +35,15 @@ flowchart LR
     B -->|JSON数据| C[PixelRotationX2<br/>决策与指令]
 ```
 
+---
 
+### PixelAddonX2效果
+
+<img width="700"  alt="Image" src="https://github.com/user-attachments/assets/ae7a1e11-bbcb-43b3-978a-7eb56aa5c0eb" />
+
+### PixelDumperX2效果
+
+<img width="700"  alt="Image" src="https://github.com/user-attachments/assets/bf720e72-78be-4841-b77f-11bbb19d81a1" />
 
 ---
 
