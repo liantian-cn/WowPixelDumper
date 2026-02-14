@@ -68,4 +68,7 @@ flowchart LR
 
 ## 使用方法
 
-- `AGENTS.md`和`REBUILD.md`已包含完整的项目结构，只需要使用任意AI编辑器。提示词让AI根据这2个文件进行重构，就可以生成输入自己的项目。
+- 先读 `Rebuild.md`：只看跨语言通用的业务逻辑与协议，适合重构对齐。
+- 再看 `Dumper.md`：快速了解 `Dumper\` 与 `Dumper.NET\` 每个文件的用途。
+- 需要实现细节时看 `Python.md` 和 `DotNet.md`：分别对应两端技术栈。
+- `Agents.md`：说明两个项目彼此独立但功能一致，并给出文档阅读顺序。

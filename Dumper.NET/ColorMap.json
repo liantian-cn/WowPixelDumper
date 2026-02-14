@@ -1,0 +1,39 @@
+{
+    "IconType": {
+        "60,100,220": "MAGIC",
+        "100,0,120": "CURSE",
+        "160,120,60": "DISEASE",
+        "154,205,50": "POISON",
+        "230,120,20": "ENRAGE",
+        "80,0,20": "BLEED",
+        "255,60,60": "PLAYER_DEBUFF",
+        "80,220,120": "PLAYER_BUFF",
+        "64,158,210": "PLAYER_SPELL",
+        "255,255,60": "ENEMY_SPELL_INTERRUPTIBLE",
+        "200,0,0": "ENEMY_SPELL_NOT_INTERRUPTIBLE",
+        "105,105,210": "ENEMY_DEBUFF",
+        "0,0,0": "NONE"
+    },
+    "Class": {
+        "199,86,36": "WARRIOR",
+        "245,140,186": "PALADIN",
+        "163,203,66": "HUNTER",
+        "255,245,105": "ROGUE",
+        "196,207,207": "PRIEST",
+        "125,125,215": "DEATHKNIGHT",
+        "64,148,255": "SHAMAN",
+        "64,158,210": "MAGE",
+        "105,105,210": "WARLOCK",
+        "0,255,150": "MONK",
+        "255,125,10": "DRUID",
+        "163,48,201": "DEMONHUNTER",
+        "108,191,246": "EVOKER",
+        "0,0,0": "NONE"
+    },
+    "Role": {
+        "180,80,20": "TANK",
+        "230,200,50": "DPS",
+        "120,200,255": "HEALER",
+        "0,0,0": "NONE"
+    }
+}

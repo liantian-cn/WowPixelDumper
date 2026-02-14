@@ -108,7 +108,7 @@ class NodeTitleManager:
     4. 管理未匹配节点（内存中）
     """
 
-    def __init__(self, db_path: str | None = None, similarity_threshold: float = 0.99) -> None:
+    def __init__(self, db_path: str | None = None, similarity_threshold: float = 0.995) -> None:
         """初始化管理器。
 
         Args:
@@ -582,9 +582,9 @@ class NodeTitleManager:
         """更新相似度阈值。
 
         Args:
-            new_threshold: 新阈值 (0.0-1.0)
+            new_threshold: 新阈值 (0.980-0.999)
         """
-        self.similarity_threshold = max(0.0, min(1.0, new_threshold))
+        self.similarity_threshold = max(0.980, min(0.999, new_threshold))
         print(f'[NodeTitleManager] 阈值更新为: {self.similarity_threshold}')
 
     def get_unmatched_nodes(self) -> list[dict[str, Any]]:

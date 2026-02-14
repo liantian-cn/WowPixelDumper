@@ -224,11 +224,11 @@ class MainWindow(QWidget):
         self.l1_right_layout: QHBoxLayout = QHBoxLayout()
         self.github_button: QPushButton = QPushButton('Github')
         self.github_button.clicked.connect(
-            lambda: QDesktopServices.openUrl(QUrl('https://github.com/liantian-cn/PixelDumper'))
+            lambda: QDesktopServices.openUrl(QUrl('https://github.com/liantian-cn/PixelDumperX2'))
         )
-        self.discord_button: QPushButton = QPushButton('Discord')
+        self.discord_button: QPushButton = QPushButton('Kook App')
         self.discord_button.clicked.connect(
-            lambda: QDesktopServices.openUrl(QUrl('https://discord.gg/DX77uHc9'))
+            lambda: QDesktopServices.openUrl(QUrl('https://kook.vip/P0KJnb'))
         )
         self.l1_right_layout.addWidget(self.github_button)
         self.l1_right_layout.addWidget(self.discord_button)

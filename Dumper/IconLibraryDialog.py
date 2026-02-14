@@ -828,14 +828,14 @@ class IconLibraryDialog(QDialog):
         # 滑块
         slider_layout: QHBoxLayout = QHBoxLayout()
         self.threshold_slider: QSlider = QSlider(Qt.Orientation.Horizontal)
-        self.threshold_slider.setRange(80, 99)
-        self.threshold_slider.setValue(int(self.title_manager.similarity_threshold * 100))
+        self.threshold_slider.setRange(980, 999)
+        self.threshold_slider.setValue(int(round(self.title_manager.similarity_threshold * 1000)))
         self.threshold_slider.valueChanged.connect(self.on_threshold_changed)
         slider_layout.addWidget(self.threshold_slider)
 
         # 数值显示
-        self.threshold_label: QLabel = QLabel(f'{self.title_manager.similarity_threshold:.2f}')
-        self.threshold_label.setFixedWidth(50)
+        self.threshold_label: QLabel = QLabel(f'{self.title_manager.similarity_threshold:.3f}')
+        self.threshold_label.setFixedWidth(60)
         slider_layout.addWidget(self.threshold_label)
 
         threshold_layout.addLayout(slider_layout)
@@ -843,9 +843,9 @@ class IconLibraryDialog(QDialog):
         # 说明
         info_text: QLabel = QLabel(
             '阈值说明:\n'
-            '- 0.95 (推荐): 较为严格的匹配，只匹配非常相似的图标\n'
-            '- 0.90: 宽松匹配，可能匹配到相似但不完全相同的图标\n'
-            '- 低于0.90: 容易误匹配，不推荐'
+            '- 0.995 (推荐): 非常严格的匹配，只匹配高度相似的图标\n'
+            '- 0.980: 更宽松的匹配，可能匹配到相似但不完全相同的图标\n'
+            '- 低于0.980: 容易误匹配，不推荐'
         )
         info_text.setWordWrap(True)
         threshold_layout.addWidget(info_text)
@@ -923,9 +923,9 @@ class IconLibraryDialog(QDialog):
 
     def on_threshold_changed(self, value: int) -> None:
         """阈值滑块变化。"""
-        threshold: float = value / 100.0
+        threshold: float = value / 1000.0
         self.title_manager.update_threshold(threshold)
-        self.threshold_label.setText(f'{threshold:.2f}')
+        self.threshold_label.setText(f'{threshold:.3f}')
 
     def update_db_info(self) -> None:
         """更新数据库信息。"""
