@@ -479,7 +479,7 @@ class NodeExtractor:
                 'title': icon_node.title,
                 'remaining': cooldown_block.remaining,
                 'height': height_block.is_white,
-                'charge': int(charge_node.middle.white_count) if not (charge_node.middle.is_pure and charge_node.middle.is_black) else 0,
+                'charge': int(charge_node.white_count) if not (charge_node.is_pure and charge_node.is_black) else 0,
                 'known': known_block.is_white,
                 'usable': usable_block.is_white
             }
