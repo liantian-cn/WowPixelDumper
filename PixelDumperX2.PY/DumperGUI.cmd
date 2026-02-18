@@ -1,1 +1,0 @@
-start uvw run .\DumperGUI.py
