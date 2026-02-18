@@ -1,15 +1,23 @@
-local addonName, addonTable = ...
-local LibRangeCheck         = LibStub:GetLibrary("LibRangeCheck-3.0", true)
+local addonName, addonTable                = ...
+local LibRangeCheck                        = LibStub:GetLibrary("LibRangeCheck-3.0", true)
 
-local DEBUG                 = false
-local scale                 = 1
-local fontFile              = "Interface\\Addons\\" .. addonName .. "\\Fonts\\CustomFont.ttf"
+local DEBUG                                = false
+local scale                                = 1
+local fontFile                             = "Interface\\Addons\\" .. addonName .. "\\Fonts\\CustomFont.ttf"
 
 -- 日志输出函数
-local logging               = function(msg)
+local logging                              = function(msg)
     print("|cFFFFBB66[PixDumper]|r" .. tostring(msg))
 end
 
+local gameBuildVersion, GameBuildNumber, _ = GetBuildInfo()
+local fullVersion                          = gameBuildVersion .. "." .. GameBuildNumber
+local addonVersion                         = C_AddOns.GetAddOnMetadata(addonName, "Version")
+
+if addonVersion ~= fullVersion then
+    logging("插件版本" .. addonVersion .. " 游戏版本" .. fullVersion)
+    logging("插件版本与游戏版本不一致，可能会导致一些问题")
+end
 
 -- 本地化提高性能
 local CreateFrame = CreateFrame
@@ -170,20 +178,20 @@ remaining_curve:AddPoint(155.0, COLOR.C200)
 remaining_curve:AddPoint(375.0, COLOR.C255)
 
 -- 框架初始化函数表
-local FrameInitFuncs = {}
+local FrameInitFuncs               = {}
 -- 更新函数表
-local OnUpdateFuncs_STD    = {}
+local OnUpdateFuncs_STD            = {}
 -- 低频更新函数表
-local OnUpdateFuncs_LOW = {}
+local OnUpdateFuncs_LOW            = {}
 -- Aura 事件更新函数表（按 unit 分发）
-local OnEventFunc_Aura = {}
+local OnEventFunc_Aura             = {}
 -- 生命上限事件更新函数表（按 unit 分发）
 local OnEventFunc_MaxHealth_Player = {}
-local OnEventFunc_MaxHealth_Party = {}
+local OnEventFunc_MaxHealth_Party  = {}
 -- 技能图标事件更新函数表
-local OnEventFunc_Spell = {}
+local OnEventFunc_Spell            = {}
 -- 技能表，每个技能有两种显示方式："cooldown"和"charge"
-addonTable.Spell     = {}
+addonTable.Spell                   = {}
 -- 添加GCD技能到技能表
 
 
@@ -266,10 +274,10 @@ local timeElapsed = 0
 local lowFrequencyTimeElapsed = 0
 -- 钩子OnUpdate脚本，用于定时更新
 frame:HookScript("OnUpdate", function(self, elapsed)
-    local tickOffset = 1.0 / addonTable.FPS;
+    local tickOffset             = 1.0 / addonTable.FPS;
     local lowFrequencyTickOffset = 1.0 / addonTable.LowFrequencyFPS;
-    timeElapsed      = timeElapsed + elapsed
-    lowFrequencyTimeElapsed = lowFrequencyTimeElapsed + elapsed
+    timeElapsed                  = timeElapsed + elapsed
+    lowFrequencyTimeElapsed      = lowFrequencyTimeElapsed + elapsed
     if timeElapsed > tickOffset then
         timeElapsed = 0
         for _, updater in ipairs(OnUpdateFuncs_STD) do
