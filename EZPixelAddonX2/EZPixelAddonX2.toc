@@ -1,0 +1,16 @@
+## Interface: 120000, 120001
+## Title: EZPixelAddonX2
+## Author: Anonymous
+## Version: 12.0.1.65893
+## SavedVariables: EZPixelAddonX2DB
+## LoadSavedVariablesFirst: 1
+## Category-zhCN: 工具
+
+# LibStub
+Libs\LibStub\LibStub.lua
+Libs\LibRangeCheck-3.0\LibRangeCheck-3.0.lua
+
+Setting.lua
+EZPixelAddonX2.lua
+Class\Priest.lua
+Class\Druid.lua
