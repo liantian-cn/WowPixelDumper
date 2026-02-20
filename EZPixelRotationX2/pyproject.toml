@@ -1,0 +1,13 @@
+[project]
+name = "EZPixelRotationX2x2"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "nuitka>=4.0.1",
+    "pyside6>=6.10.2",
+    "pywin32>=311",
+    "requests>=2.32.5",
+    "rich>=14.3.2",
+]
