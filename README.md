@@ -79,6 +79,7 @@ flowchart LR
   - 国外用户推荐用[Codex](https://openai.com/zh-Hans-CN/codex/)、[Google Antigravity](https://antigravity.google/)。
   - 已经经过测试，GLM-4.7，Kimi-2.5等非最顶级模型，足以重构后功能等价但实现差异显著，并且特征已完全打乱。
   - 使用Codex，使用token计费使用GPT-5.3-codex，重构EZPixelAddonX2、EZPixelDumperX2、EZPixelRotationX2项目，从python转为.net的总消耗约`$50`，使用coding plan将大幅低于此消耗。(供应商使用的openrouter.ai)
+  - 使用国内中转Codex，总成本小于`￥100`，供应商[鸡哥Code](https://api.ikuncode.cc/register?aff=SwAO)，模型`gpt-5.3-codex`。
 - AI IDE使用关键点，总的来说，类似软件工程：
   - 第一步：让AI阅读代码，要求AI**注重业务逻辑和业务细节**，针对业务逻辑，生成重构文档`rebuild.md`。
   - 第二步：让AI阅读文档`rebuild.md`，再阅读代码，找到`rebuild.md`的缺陷并改正。
@@ -92,11 +93,15 @@ flowchart LR
 - 上述生成文档的步骤，可以让多个模型交叉反复执行。
 - 关键点：**让AI生成文档和核对文档的成本，远远低于修改代码中错误的成本**
 - 关键点：**让AI反复阅读md，而不是一直生成代码，可以有效降低幻觉。**
+- **廉价重构方法，修改变量名**
+  - `请阅读代码，看看变量名是否合适，给我一套改造方案`
+  - `请写入plan.md`
+  - `请按plan.md执行改名。`
 
 ## 归档说明
 
 - 目前项目的Addon、Dumper、Rotation三个部分，均已完成开源。
 - 提供了一个基于戒律牧的Demo，Addon环节会注册宏，Rotation环节直接uv run PriestDiscipline.py即可执行。可以看到实现了12.0之前的逻辑，双手可以完全离开键盘。
-- 我（liantian-cn）不会继续更新代码文件，因为如上文所说，我建议每个人使用AI重构出属于自己的代码，提高取整难度。此时此刻，我自己使用的也不是这套代码。
+- 不会继续更新代码文件，因为如上文所说，我建议每个人使用AI重构出属于自己的代码，提高取整难度。此时此刻，我自己使用的也不是这套代码。
 - 不接受PR，因为作为一个展示项目，没有更新必要。
 - AI很强，这个项目很简单，有问题问AI基本可以搞定。
